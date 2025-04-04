@@ -1,8 +1,8 @@
+import { AddToCartButton } from '@/components/AddToCartButton';
+import { Dish } from '@/components/Dish';
+import { Topping } from '@/components/Topping';
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, Alert } from 'react-native';
-import { Dish } from '@/view/TakeAway/Dish';
-import { Topping } from '@/view/TakeAway/Topping';
-import { AddToCartButton } from '@/view/TakeAway/AddToCartButton';
 
 type TakeAwayViewProps = {};
 

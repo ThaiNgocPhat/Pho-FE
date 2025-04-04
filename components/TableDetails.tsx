@@ -38,7 +38,7 @@ const sampleOrders = [
   }
 ];
 
-const TableDetails: React.FC<{ tableId: number, onBack: () => void }> = ({ tableId, onBack }) => {
+const TableDetails: React.FC<{ tableId: number, onBack: () => void, onOrderPress: () => void; }> = ({ tableId, onBack, onOrderPress }) => {
   const order = sampleOrders.filter(o => o.tableId === tableId);
 
   const getTotalAmount = (order: DishType[]) => {
@@ -61,7 +61,7 @@ const TableDetails: React.FC<{ tableId: number, onBack: () => void }> = ({ table
           <Text style={styles.buttonText}>⬅ Quay lại</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity onPress={() => console.log('Gọi món')} style={[styles.button, styles.orderButton]}>
+        <TouchableOpacity onPress={onOrderPress} style={[styles.button, styles.orderButton]}>
           <Text style={styles.buttonText}>🍜 Gọi món</Text>
         </TouchableOpacity>
       </View>
@@ -79,6 +79,7 @@ const TableDetails: React.FC<{ tableId: number, onBack: () => void }> = ({ table
                   <View key={index} style={styles.dishContainer}>
                     <View style={styles.dishRow}>
                       <Text style={styles.dishName}>{item.name}</Text>
+                      <Text style={styles.quantityText}>{item.quantity}</Text>
                       <Text style={styles.priceText}>{formatCurrency(item.price * item.quantity)}</Text>
                     </View>
                     <Text style={styles.toppingText}>{item.toppings.map(topping => topping.name).join(', ')}</Text>
@@ -160,6 +161,12 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: 'bold',
     flex: 2,
+  },
+  quantityText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#000',
+    marginHorizontal: 10,
   },
   toppingText: {
     fontSize: 14,

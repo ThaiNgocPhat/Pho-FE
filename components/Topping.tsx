@@ -1,26 +1,31 @@
-import React, { useState } from 'react';
-import { StyleSheet, Text, View, TouchableOpacity } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
+import { API_ENDPOINTS } from '@/config/api';
 
 type ToppingType = {
   name: string;
 };
 
 export const Topping: React.FC = () => {
-  const toppingList: ToppingType[] = [
-    { name: 'Tái' },
-    { name: 'Nạm' },
-    { name: 'Gân viên' },
-    { name: 'Xương' },
-    { name: 'Đuôi' },
-    { name: 'Lòng' },
-    { name: 'Tim' },
-    { name: 'Phèo' },
-    { name: 'Thăng long' },
-    { name: 'Lá mía' },
-  ];
-
+  const [toppingList, setToppingList] = useState<ToppingType[]>([]);
   const [selectedToppings, setSelectedToppings] = useState<string[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    // Gọi API để lấy danh sách topping
+    fetch(API_ENDPOINTS.TOPPING)
+      .then(response => response.json())
+      .then(data => {
+        setToppingList(data); // Lưu dữ liệu topping vào state
+        setLoading(false);
+      })
+      .catch(err => {
+        setError('Không thể tải topping. Vui lòng thử lại!');
+        setLoading(false);
+      });
+  }, []);
 
   const handleSelectTopping = (name: string) => {
     if (selectedToppings.includes(name)) {
@@ -29,6 +34,23 @@ export const Topping: React.FC = () => {
       setSelectedToppings([...selectedToppings, name]);
     }
   };
+
+  if (loading) {
+    return (
+      <View style={styles.container}>
+        <ActivityIndicator size="large" color="#007bff" />
+        <Text style={styles.loadingText}>Đang tải topping...</Text>
+      </View>
+    );
+  }
+
+  if (error) {
+    return (
+      <View style={styles.container}>
+        <Text style={styles.errorText}>{error}</Text>
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
@@ -44,7 +66,7 @@ export const Topping: React.FC = () => {
               <Ionicons
                 name={selectedToppings.includes(item.name) ? 'checkbox' : 'checkbox-outline'}
                 size={24}
-                color={selectedToppings.includes(item.name) ? '#4CAF50' : 'black'}
+                color={selectedToppings.includes(item.name) ? '#FF9800' : 'black'}
                 style={styles.checkbox}
               />
               <Text style={styles.toppingText}>{item.name}</Text>
@@ -101,5 +123,17 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: 'bold',
     color: '#5c3d00',
+  },
+  loadingText: {
+    fontSize: 18,
+    color: '#007bff',
+    textAlign: 'center',
+    marginTop: 20,
+  },
+  errorText: {
+    fontSize: 18,
+    color: 'red',
+    textAlign: 'center',
+    marginTop: 20,
   },
 });

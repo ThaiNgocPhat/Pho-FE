@@ -1,12 +1,18 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, TextInput } from 'react-native';
+import {
+  View,
+  TextInput,
+  TouchableOpacity,
+  Text,
+  StyleSheet,
+} from 'react-native';
 
 type AddToCartButtonProps = {
-  onPress: (note: string) => void; 
+  onPress: (note: string) => void;
 };
 
 export const AddToCartButton: React.FC<AddToCartButtonProps> = ({ onPress }) => {
-  const [note, setNote] = useState<string>(''); 
+  const [note, setNote] = useState<string>('');
 
   return (
     <View style={styles.container}>
@@ -16,42 +22,35 @@ export const AddToCartButton: React.FC<AddToCartButtonProps> = ({ onPress }) => 
         value={note}
         onChangeText={setNote}
         multiline
+        textAlignVertical="top"
       />
       <TouchableOpacity style={styles.button} onPress={() => onPress(note)}>
-        <Text style={styles.buttonText}>Thêm vào giỏ hàng</Text>
+        <Text style={styles.buttonText}>Thêm vào</Text>
       </TouchableOpacity>
     </View>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    width: '100%',
-    paddingHorizontal: 20,
-  },
+  container: { marginVertical: 10, width: '100%' },
   textArea: {
     height: 100,
-    width: '100%',
     borderColor: '#ccc',
     borderWidth: 1,
     borderRadius: 8,
     padding: 10,
-    marginBottom: 15,
-    fontSize: 16,
+    marginBottom: 10,
     textAlignVertical: 'top',
   },
   button: {
-    backgroundColor: '#ff5722',
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    borderRadius: 5,
+    backgroundColor: '#FF9800',
+    padding: 12,
+    borderRadius: 8,
     alignItems: 'center',
   },
   buttonText: {
     color: '#fff',
     fontSize: 16,
-    fontWeight: 'bold',
+    fontWeight: '600',
   },
 });

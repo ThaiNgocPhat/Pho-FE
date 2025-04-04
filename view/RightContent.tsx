@@ -1,8 +1,10 @@
 import CartView from '@/view/CartView/CartView';
 import HistoryView from '@/view/History/HistoryView';
 import { HotpotView } from '@/view/HotPot/HotPotView';
-import TableDetails from '@/view/Table/TableDetails';
-import TableList from '@/view/Table/TableList';
+import { OrderMenu } from '@/components/OrderMenu';
+import TableDetails from '@/components/TableDetails';
+
+import TableList from '@/components/TableList';
 import { TakeAwayView } from '@/view/TakeAway/TakeAwayView';
 import React, { useState } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
@@ -19,12 +21,19 @@ type RightContentProps = {
 
 export const RightContent: React.FC<RightContentProps> = ({ showTable, showTakeAway, showHotPot, showCart, showHistory }) => {
   const [selectedTable, setSelectedTable] = useState<number | null>(null);
+  const [showOrderMenu, setShowOrderMenu] = useState(false);
   const tables = Array.from({ length: 12 }, (_, i) => ({ id: i + 1 }));
 
   return (
     <View style={styles.rightPanel}>
-      {selectedTable !== null ? (
-        <TableDetails tableId={selectedTable} onBack={() => setSelectedTable(null)} />
+      {showOrderMenu ? (
+        <OrderMenu isTakeaway={false} onBack={() => setShowOrderMenu(false)}/>
+      ) : selectedTable !== null ? (
+        <TableDetails
+          tableId={selectedTable}
+          onBack={() => setSelectedTable(null)}
+          onOrderPress={() => setShowOrderMenu(true)}
+        />
       ) : showTable ? (
         <TableList tables={tables} onSelectTable={setSelectedTable} />
       ) : showTakeAway ? (
@@ -40,6 +49,7 @@ export const RightContent: React.FC<RightContentProps> = ({ showTable, showTakeA
       )}
     </View>
   );
+  
 };
 
 const styles = StyleSheet.create({

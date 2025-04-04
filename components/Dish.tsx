@@ -1,30 +1,55 @@
-import React, { useState } from 'react';
-import { StyleSheet, Text, View, TouchableOpacity } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, TouchableOpacity, StyleSheet, ActivityIndicator, Alert } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
+import { API_ENDPOINTS } from '../config/api';
 
 type DishType = {
   name: string;
 };
 
 export const Dish: React.FC = () => {
-  const dishList: DishType[] = [
-    { name: 'Phở' },
-    { name: 'Bún bò' },
-    { name: 'Hủ tiếu' },
-    { name: 'Mì gói' },
-    { name: 'Cẩm thường'},
-    { name: 'Cẩm đặc biệt'}
-  ];
-
+  const [dishList, setDishList] = useState<DishType[]>([]);
   const [selectedDish, setSelectedDish] = useState<string | null>(null);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetch(API_ENDPOINTS.DISH)
+      .then(response => response.json())
+      .then(data => {
+        setDishList(data);
+        setLoading(false);
+      })
+      .catch(err => {
+        setError('Không thể tải món ăn. Vui lòng thử lại!');
+        setLoading(false);
+      });
+  }, []);
 
   const handleSelectDish = (name: string) => {
     setSelectedDish(selectedDish === name ? null : name);
   };
 
+  if (loading) {
+    return (
+      <View style={styles.container}>
+        <ActivityIndicator size="large" color="#007bff" />
+        <Text style={styles.loadingText}>Đang tải món ăn...</Text>
+      </View>
+    );
+  }
+
+  if (error) {
+    return (
+      <View style={styles.container}>
+        <Text style={styles.errorText}>{error}</Text>
+      </View>
+    );
+  }
+
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>🍜 Mang về</Text>
+      <Text style={styles.title}>🍜 Món ăn</Text>
       <View style={styles.dishContainer}>
         {dishList.map((item, index) => (
           <TouchableOpacity
@@ -34,9 +59,9 @@ export const Dish: React.FC = () => {
           >
             <View style={styles.dishContent}>
               <Ionicons
-                name={selectedDish === item.name ? 'checkbox' : 'checkbox-outline'} 
+                name={selectedDish === item.name ? 'checkbox' : 'checkbox-outline'}
                 size={24}
-                color={selectedDish === item.name ? '#4CAF50' : 'black'} 
+                color={selectedDish === item.name ? '#FF9800' : 'black'}
                 style={styles.checkbox}
               />
               <Text style={styles.dishText}>{item.name}</Text>
@@ -93,5 +118,17 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: 'bold',
     color: '#5c3d00',
+  },
+  loadingText: {
+    fontSize: 18,
+    color: '#007bff',
+    textAlign: 'center',
+    marginTop: 20,
+  },
+  errorText: {
+    fontSize: 18,
+    color: 'red',
+    textAlign: 'center',
+    marginTop: 20,
   },
 });
