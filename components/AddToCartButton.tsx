@@ -9,10 +9,11 @@ import {
 
 type AddToCartButtonProps = {
   onPress: (note: string) => void;
+  note: string;
+  onChangeNote: (note: string) => void;
 };
 
-export const AddToCartButton: React.FC<AddToCartButtonProps> = ({ onPress }) => {
-  const [note, setNote] = useState<string>('');
+export const AddToCartButton: React.FC<AddToCartButtonProps> = ({ onPress, note, onChangeNote }) => {
 
   return (
     <View style={styles.container}>
@@ -20,7 +21,7 @@ export const AddToCartButton: React.FC<AddToCartButtonProps> = ({ onPress }) => 
         style={styles.textArea}
         placeholder="Ghi chú cho món ăn..."
         value={note}
-        onChangeText={setNote}
+        onChangeText={onChangeNote}
         multiline
         textAlignVertical="top"
       />

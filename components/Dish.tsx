@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, ActivityIndicator, Alert } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet} from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { API_ENDPOINTS } from '../config/api';
 
@@ -34,9 +34,8 @@ export const Dish: React.FC<DishProps> = ({ selectedDishId, onSelectDish, setSel
   // };
   const handleSelectDish = (dishId: string, dishName: string) => {
     onSelectDish(dishId);
-    // Reset toppings if a special dish is selected
     if (['Cẩm Thường', 'Cẩm Đặc Biệt'].includes(dishName)) {
-      setSelectedToppings([]); // Reset toppings if the special dish is selected
+      setSelectedToppings([]);
     }
   };
 
@@ -56,7 +55,7 @@ export const Dish: React.FC<DishProps> = ({ selectedDishId, onSelectDish, setSel
           <TouchableOpacity
             key={index}
             style={styles.dishItem}
-            onPress={() => handleSelectDish(item._id, item.name)} // Truyền thêm tên món
+            onPress={() => handleSelectDish(item._id, item.name)} 
           >
             <View style={styles.dishContent}>
               <Ionicons

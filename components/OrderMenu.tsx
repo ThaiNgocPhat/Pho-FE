@@ -30,6 +30,7 @@ export const OrderMenu: React.FC<OrderMenuProps> = ({ isTakeaway, onBack }) => {
   const [selectedItems, setSelectedItems] = useState<CartItem[]>([]);
   const [dishList, setDishList] = useState<{ name: string }[]>([]);
   const [toppingList, setToppingList] = useState<{ name: string }[]>([]);
+  const [note, setNote] = useState<string>('');
 
   useEffect(() => {
     const fetchDishes = async () => {
@@ -151,7 +152,7 @@ export const OrderMenu: React.FC<OrderMenuProps> = ({ isTakeaway, onBack }) => {
             </TouchableOpacity>
           ))}
         </View>
-        <AddToCartButton onPress={handleAddToCart} />
+        <AddToCartButton onPress={handleAddToCart} note={note} onChangeNote={setNote}/>
         {selectedItems.length > 0 && (
           <View style={styles.selectedItemsContainer}>
             <Text style={styles.subTitle}>🧾 Món đã chọn:</Text>

@@ -2,6 +2,7 @@ import { AddToCartButton } from '@/components/AddToCartButton';
 import { Dish } from '@/components/Dish';
 import { Topping } from '@/components/Topping';
 import { API_ENDPOINTS } from '@/config/api';
+import { DISH_TOPPING_RULES } from '@/config/constants';
 import { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, Alert } from 'react-native';
 
@@ -18,12 +19,12 @@ export const TakeAwayView: React.FC<TakeAwayViewProps> = () => {
       Alert.alert('Thông báo', 'Vui lòng chọn món ăn!');
       return;
     }
-    const isSpecialDish = ['Cẩm Thường', 'Cẩm Đặc Biệt'].includes(selectedDishId);
-    if (!isSpecialDish && selectedToppings.length === 0) {
+    const toppingRule = DISH_TOPPING_RULES[selectedDishId] || 'requiredTopping';
+    if (toppingRule === 'requiredTopping' && selectedToppings.length === 0) {
       Alert.alert('Thông báo', 'Vui lòng chọn topping!');
       return;
     }
-  
+
     const cartItem = {
       dishId: selectedDishId,
       toppings: selectedToppings,
@@ -75,7 +76,7 @@ export const TakeAwayView: React.FC<TakeAwayViewProps> = () => {
           }}
         />
         <View style={styles.addToCartContainer}>
-          <AddToCartButton onPress={handleAddToCart} />
+          <AddToCartButton onPress={handleAddToCart} note={note} onChangeNote={setNote}/>
         </View>
       </ScrollView>
     </View>

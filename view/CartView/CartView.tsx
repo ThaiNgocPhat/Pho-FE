@@ -12,6 +12,7 @@ type DishType = {
   price: number;
   toppings: ToppingType[];
   quantity: number;
+  note: string
 };
 
 const CartView: React.FC = () => {
@@ -27,7 +28,7 @@ const CartView: React.FC = () => {
       // Kiểm tra nếu giỏ hàng có món
       if (Array.isArray(data.items) && data.items.length > 0) {
         const formatted = await Promise.all(
-          data.items.map(async (item: { dishId: string, toppings: string[], quantity: number }) => {
+          data.items.map(async (item: { dishId: string, toppings: string[], quantity: number, note: string }) => {
             const dishResponse = await fetch(`${API_ENDPOINTS.GET_DISH_BY_ID}/${item.dishId}`);
             const dishData = await dishResponse.json();
   
@@ -37,6 +38,7 @@ const CartView: React.FC = () => {
               price: dishData.price,
               toppings: item.toppings.map((t: string) => ({ name: t })),
               quantity: item.quantity,
+              note: item.note || ''
             };
           })
         );
@@ -104,7 +106,6 @@ const CartView: React.FC = () => {
       newItems[index].quantity -= 1;
       setCartItems(newItems);
     } else {
-      // Nếu số lượng về 0, xóa món khỏi giỏ hàng
       newItems.splice(index, 1);
       setCartItems(newItems);
     }
@@ -132,6 +133,9 @@ const CartView: React.FC = () => {
                     </Text>
                   ))}
                 </View>
+                {item.note && (
+                <Text style={{color: 'red'}}>{item.note}</Text>
+              )}
               </View>
 
               <View style={styles.cartItemRightContainer}>
