@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { AddToCartButton } from '@/components/AddToCartButton';
+import { API_ENDPOINTS } from '@/config/api';
 
 type OrderMenuProps = {
   isTakeaway: boolean;
@@ -23,11 +24,6 @@ type CartItem = {
   toppings: string[];
 };
 
-const API_ENDPOINTS = {
-  DISH: 'http://10.0.2.2:9999/dish',
-  TOPPING: 'http://10.0.2.2:9999/topping',
-};
-
 export const OrderMenu: React.FC<OrderMenuProps> = ({ isTakeaway, onBack }) => {
   const [selectedDish, setSelectedDish] = useState<string | null>(null);
   const [selectedToppings, setSelectedToppings] = useState<string[]>([]);
@@ -35,7 +31,6 @@ export const OrderMenu: React.FC<OrderMenuProps> = ({ isTakeaway, onBack }) => {
   const [dishList, setDishList] = useState<{ name: string }[]>([]);
   const [toppingList, setToppingList] = useState<{ name: string }[]>([]);
 
-  // Fetch dishes and toppings from API
   useEffect(() => {
     const fetchDishes = async () => {
       try {
@@ -79,8 +74,8 @@ export const OrderMenu: React.FC<OrderMenuProps> = ({ isTakeaway, onBack }) => {
 
     const newItem: CartItem = {
       name: selectedDish,
-      note: note,  // Lưu ghi chú từ AddToCartButton
-      quantity: 1,  // Mặc định số lượng là 1
+      note: note,  
+      quantity: 1, 
       toppings: selectedToppings,
     };
 

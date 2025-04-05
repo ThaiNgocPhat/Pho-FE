@@ -1,4 +1,5 @@
-import React from 'react';
+import { API_ENDPOINTS } from '@/config/api';
+import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, ScrollView } from 'react-native';
 
 type ToppingType = {
@@ -12,48 +13,59 @@ type DishType = {
   quantity: number;
 };
 
-const sampleOrders = [
-  // Người A
-  {
-    name: 'Phở',
-    price: 35000,
-    toppings: [{ name: 'Tái' }, { name: 'Nạm' }, { name: 'Viên' }],
-    quantity: 1,
-  },
-  {
-    name: 'Phở',
-    price: 35000,
-    toppings: [{ name: 'Tái' }, { name: 'Bò' }],
-    quantity: 1,
-  },
-  {
-    name: 'Mì Gói',
-    price: 20000,
-    toppings: [{ name: 'Tái' }, { name: 'Nạm' }],
-    quantity: 1,
-  },
-
-  // Người B
-  {
-    name: 'Phở',
-    price: 30000,
-    toppings: [{ name: 'Cẩm Thường' }],
-    quantity: 1,
-  },
-];
-
-// Hàm định dạng tiền tệ
 const formatCurrency = (amount: number) => {
   return amount.toLocaleString('vi-VN') + ' VNĐ';
 };
 
 const HistoryView: React.FC = () => {
+  const [orderList, setOrderList] = useState<DishType[][]>([]);
+
+  useEffect(() => {
+    fetchOrderHistory();
+  }, []);
+  
+  const fetchOrderHistory = async () => {
+    try {
+      const response = await fetch(API_ENDPOINTS.GET_ORDER);
+      const data = await response.json();
+  
+      const formatted = await Promise.all(
+        data.map(async (order: { items: any[] }) => {
+          const orderItems = await Promise.all(
+            order.items.map(async (item) => {
+              const dishRes = await fetch(`${API_ENDPOINTS.GET_DISH_BY_ID}/${item.dishId}`);
+              const dish = await dishRes.json();
+  
+              return {
+                dishId: item.dishId,
+                name: dish.name,
+                price: dish.price,
+                toppings: item.toppings.map((t: string) => ({ name: t })),
+                quantity: item.quantity,
+              };
+            })
+          );
+  
+          return orderItems;
+        })
+      );
+  
+      setOrderList(formatted); // Mỗi đơn là 1 mảng DishType[]
+    } catch (error) {
+      console.error('Lỗi khi fetch lịch sử đơn hàng:', error);
+    }
+  };
+
   const generateRandomOrderNumber = () => {
     return Math.floor(Math.random() * 900) + 100; 
   };
 
   const getTotalAmount = (order: DishType[]) => {
     return order.reduce((total, item) => total + item.price * item.quantity, 0);
+  };
+
+  const formatCurrency = (value: number) => {
+    return value.toLocaleString('vi-VN') + ' VNĐ';
   };
 
   const renderOrder = (order: DishType[]) => {
@@ -84,16 +96,11 @@ const HistoryView: React.FC = () => {
     );
   };
 
-  // Nhóm đơn hàng theo từng khách
-  const customerAOrders = sampleOrders.slice(0, 3);  // Người A
-  const customerBOrders = sampleOrders.slice(3);  // Người B
-
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Lịch sử Mua Hàng</Text>
       <ScrollView contentContainerStyle={styles.cartContainer}>
-        {renderOrder(customerAOrders)}
-        {renderOrder(customerBOrders)}
+        {orderList.map((order, index) => renderOrder(order))}
       </ScrollView>
     </View>
   );

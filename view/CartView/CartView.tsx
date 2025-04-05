@@ -1,48 +1,95 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Alert } from 'react-native';
+import { API_ENDPOINTS } from '@/config/api'; 
 
 type ToppingType = {
   name: string;
 };
 
 type DishType = {
+  dishId: string;
   name: string;
   price: number;
   toppings: ToppingType[];
   quantity: number;
 };
 
-const sampleData: DishType[] = [
-  {
-    name: 'Phở',
-    price: 35000,
-    toppings: [{ name: 'Tái' }, { name: 'Nạm' }, { name: 'Gân viên' }],
-    quantity: 1,
-  },
-  {
-    name: 'Bún bò',
-    price: 40000,
-    toppings: [{ name: 'Đuôi' }, { name: 'Lòng' }],
-    quantity: 2,
-  },
-  {
-    name: 'Mì gói',
-    price: 20000,
-    toppings: [{ name: 'Chả' }],
-    quantity: 1,
-  },
-];
-
 const CartView: React.FC = () => {
-  const [cartItems, setCartItems] = useState(sampleData);
+  const [cartItems, setCartItems] = useState<DishType[]>([]);
+  const [isCartEmpty, setIsCartEmpty] = useState(false); 
 
+  const fetchCart = async () => {
+    try {
+      const response = await fetch(API_ENDPOINTS.GET_CART);
+      const data = await response.json();
+      console.log("Dữ liệu giỏ hàng:", data);
+  
+      // Kiểm tra nếu giỏ hàng có món
+      if (Array.isArray(data.items) && data.items.length > 0) {
+        const formatted = await Promise.all(
+          data.items.map(async (item: { dishId: string, toppings: string[], quantity: number }) => {
+            const dishResponse = await fetch(`${API_ENDPOINTS.GET_DISH_BY_ID}/${item.dishId}`);
+            const dishData = await dishResponse.json();
+  
+            return {
+              dishId: item.dishId,
+              name: dishData.name,
+              price: dishData.price,
+              toppings: item.toppings.map((t: string) => ({ name: t })),
+              quantity: item.quantity,
+            };
+          })
+        );
+        setCartItems(formatted);
+        setIsCartEmpty(false);
+      } else {
+        setCartItems([]);
+        setIsCartEmpty(true); 
+      }
+    } catch (error) {
+      console.error('Lỗi khi fetch giỏ hàng:', error);
+    }
+  };  
+  
+  useEffect(() => {
+    fetchCart(); 
+  }, []);
+  
+  const handlePayment = async () => {
+    try {
+      const payload = cartItems
+        .filter(item => item.quantity > 0)
+        .map((item) => ({
+          dishId: item.dishId, 
+          quantity: item.quantity,
+          toppings: item.toppings.map((t) => t.name),
+        }));
+  
+      const res = await fetch(`${API_ENDPOINTS.ORDER}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ items: payload }),
+      });
+  
+      const data = await res.json();
+      Alert.alert('Thông báo', 'Đặt hàng thành công!')
+      setCartItems([]);
+      fetchCart(); 
+    } catch (err) {
+      console.error('Lỗi khi thanh toán:', err);
+    }
+  };
+  
+  
   const totalAmount = cartItems.reduce(
     (total, item) => total + item.price * item.quantity,
     0
   );
 
   const formatPrice = (price: number) => {
-    return price.toLocaleString('vi-VN'); 
+    return price.toLocaleString('vi-VN');
   };
 
   const handleIncreaseQuantity = (index: number) => {
@@ -66,62 +113,70 @@ const CartView: React.FC = () => {
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Giỏ hàng</Text>
-      <ScrollView contentContainerStyle={styles.cartContainer}>
-        {cartItems.map((item, index) => (
-          <View key={index} style={styles.cartItem}>
-            <View style={styles.cartItemLeft}>
-              <Text style={styles.dishName}>{item.name}</Text>
-              <View style={styles.toppingContainer}>
-                {item.toppings.map((topping, toppingIndex) => (
-                  <Text key={toppingIndex} style={styles.toppingText}>
-                    {topping.name}
-                  </Text>
-                ))}
-              </View>
-            </View>
 
-            <View style={styles.cartItemRightContainer}>
-              <View style={styles.cartItemRight}>
-                <Text style={styles.priceText}>
-                  {formatPrice(item.price * item.quantity)} VNĐ
-                </Text>
+      {/* Hiển thị thông báo khi giỏ hàng trống */}
+      {isCartEmpty ? (
+        <View style={styles.emptyCartContainer}>
+          <Text style={styles.emptyCartText}>Giỏ hàng của bạn hiện tại không có món nào.</Text>
+        </View>
+      ) : (
+        <ScrollView contentContainerStyle={styles.cartContainer} style={{ flexGrow: 1 }}>
+          {cartItems.map((item, index) => (
+            <View key={index} style={styles.cartItem}>
+              <View style={styles.cartItemLeft}>
+                <Text style={styles.dishName}>{item.name}</Text>
+                <View style={styles.toppingContainer}>
+                  {item.toppings.map((topping, toppingIndex) => (
+                    <Text key={toppingIndex} style={styles.toppingText}>
+                      {topping.name}
+                    </Text>
+                  ))}
+                </View>
               </View>
-              <View style={styles.quantityContainer}>
-                <TouchableOpacity
-                  style={styles.quantityButton}
-                  onPress={() => handleDecreaseQuantity(index)}
-                >
-                  <Text style={styles.buttonText}>-</Text>
-                </TouchableOpacity>
-                <Text style={styles.quantityText}>{item.quantity}</Text>
-                <TouchableOpacity
-                  style={styles.quantityButton}
-                  onPress={() => handleIncreaseQuantity(index)}
-                >
-                  <Text style={styles.buttonText}>+</Text>
-                </TouchableOpacity>
+
+              <View style={styles.cartItemRightContainer}>
+                <View style={styles.cartItemRight}>
+                  <Text style={styles.priceText}>
+                    {formatPrice(item.price * item.quantity)} VNĐ
+                  </Text>
+                </View>
+                <View style={styles.quantityContainer}>
+                  <TouchableOpacity
+                    style={styles.quantityButton}
+                    onPress={() => handleDecreaseQuantity(index)}
+                  >
+                    <Text style={styles.buttonText}>-</Text>
+                  </TouchableOpacity>
+                  <Text style={styles.quantityText}>{item.quantity}</Text>
+                  <TouchableOpacity
+                    style={styles.quantityButton}
+                    onPress={() => handleIncreaseQuantity(index)}
+                  >
+                    <Text style={styles.buttonText}>+</Text>
+                  </TouchableOpacity>
+                </View>
               </View>
+              <View style={styles.separator} />
             </View>
-            <View style={styles.separator} />
-          </View>
-        ))}
-      </ScrollView>
+          ))}
+        </ScrollView>
+      )}
 
       <View style={styles.totalContainer}>
         <Text style={styles.totalText}>
           Tổng tiền: {formatPrice(totalAmount)} VNĐ
         </Text>
-        <TouchableOpacity style={styles.paymentButton}>
+        <TouchableOpacity style={styles.paymentButton} onPress={handlePayment}>
           <Text style={styles.paymentButtonText}>Thanh toán</Text>
         </TouchableOpacity>
       </View>
     </View>
   );
 };
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    width: '100%',
     padding: 20,
     backgroundColor: '#f8f9fa',
   },
@@ -136,11 +191,10 @@ const styles = StyleSheet.create({
   },
   cartItem: {
     flexDirection: 'row',
-    alignItems: 'center',
     paddingVertical: 10,
     borderBottomWidth: 1,
     borderBottomColor: '#ccc',
-  },
+  },  
   cartItemLeft: {
     flex: 1,
   },
@@ -157,10 +211,9 @@ const styles = StyleSheet.create({
   },
   cartItemRightContainer: {
     flexDirection: 'column',
-    justifyContent: 'flex-end',
-    alignItems: 'center',
-    flex: 1,
-  },
+    alignItems: 'flex-end',
+    justifyContent: 'center',
+  },  
   cartItemRight: {
     marginRight: 10,
   },
@@ -211,6 +264,16 @@ const styles = StyleSheet.create({
     color: 'white',
     fontSize: 18,
     fontWeight: 'bold',
+  },
+  emptyCartContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  emptyCartText: {
+    fontSize: 18,
+    color: 'gray',
+    textAlign: 'center',
   },
 });
 

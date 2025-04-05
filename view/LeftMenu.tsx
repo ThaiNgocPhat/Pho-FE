@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { TouchableOpacity, Text, StyleSheet, View } from 'react-native';
 import { MaterialIcons, MaterialCommunityIcons } from '@expo/vector-icons';
 
-export const LeftMenu = ({ setShowTable, setShowTakeAway, setShowHotPot, setShowCart, setShowHistory }: any) => {
+export const LeftMenu = ({ setShowTable, setShowTakeAway, setShowHotPot, setShowCart, setShowHistory, setShowHistoryHotPot }: any) => {
   const [selectedOption, setSelectedOption] = useState<string | null>(null);
 
   const handleSelectBan = () => {
@@ -39,6 +39,17 @@ export const LeftMenu = ({ setShowTable, setShowTakeAway, setShowHotPot, setShow
     setShowCart(false);
     setShowHistory(true);
   };
+
+  const handHistoryHotPot = () => {
+    setSelectedOption('historyhotpot');
+    setShowTable(false);
+    setShowTakeAway(false);
+    setShowHotPot(false);
+    setShowCart(false);
+    setShowHistory(false);
+    setShowHistoryHotPot(true);
+  };
+  
 
   return (
     <View style={styles.container}>
@@ -115,6 +126,21 @@ export const LeftMenu = ({ setShowTable, setShowTakeAway, setShowHotPot, setShow
           color={selectedOption === 'history' ? "#fff" : "white"} 
         />
         <Text style={styles.orderOptionText}>Lịch sử</Text>
+      </TouchableOpacity>
+
+      <TouchableOpacity
+        style={[
+          styles.orderOption,
+          selectedOption === 'historyhotpot' && styles.selectedOption,
+        ]}
+        onPress={handHistoryHotPot}
+      >
+        <MaterialCommunityIcons 
+          name="history" 
+          size={30} 
+          color={selectedOption === 'historyhotpot' ? "#fff" : "white"} 
+        />
+        <Text style={styles.orderOptionText}>Lẩu về</Text>
       </TouchableOpacity>
     </View>
   );

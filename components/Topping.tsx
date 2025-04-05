@@ -7,18 +7,21 @@ type ToppingType = {
   name: string;
 };
 
-export const Topping: React.FC = () => {
+type ToppingProps = {
+  selectedToppings: string[];
+  onToggleTopping: (name: string) => void;
+};
+
+export const Topping: React.FC<ToppingProps> = ({ selectedToppings, onToggleTopping }) => {
   const [toppingList, setToppingList] = useState<ToppingType[]>([]);
-  const [selectedToppings, setSelectedToppings] = useState<string[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    // Gọi API để lấy danh sách topping
     fetch(API_ENDPOINTS.TOPPING)
       .then(response => response.json())
       .then(data => {
-        setToppingList(data); // Lưu dữ liệu topping vào state
+        setToppingList(data); 
         setLoading(false);
       })
       .catch(err => {
@@ -26,13 +29,8 @@ export const Topping: React.FC = () => {
         setLoading(false);
       });
   }, []);
-
   const handleSelectTopping = (name: string) => {
-    if (selectedToppings.includes(name)) {
-      setSelectedToppings(selectedToppings.filter((topping) => topping !== name));
-    } else {
-      setSelectedToppings([...selectedToppings, name]);
-    }
+    onToggleTopping(name);
   };
 
   if (loading) {

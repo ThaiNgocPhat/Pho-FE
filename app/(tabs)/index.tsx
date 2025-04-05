@@ -10,6 +10,7 @@ const App = () => {
   const [showHotPot, setShowHotPot] = useState(false)
   const [showCart, setShowCart] = useState(false)
   const [showHistory, setShowHistory] = useState(false)
+  const [showHistoryHotPot, setShowHistoryHotPot] = useState(false)
   const [selectedTable, setSelectedTable] = useState<number | null>(null);
 
   return (
@@ -25,6 +26,7 @@ const App = () => {
             setShowHotPot={setShowHotPot}
             setShowCart={setShowCart}
             setShowHistory={setShowHistory}
+            setShowHistoryHotPot={setShowHistoryHotPot}
           />
         </View>
         <View style={styles.rightContent}>
@@ -36,6 +38,7 @@ const App = () => {
             showHotPot={showHotPot}
             showCart={showCart}
             showHistory={showHistory}
+            showHistoryHotPot={showHistoryHotPot}
           />
         </View>
       </View>

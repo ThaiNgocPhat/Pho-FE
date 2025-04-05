@@ -5,12 +5,17 @@ import { API_ENDPOINTS } from '../config/api';
 
 type DishType = {
   name: string;
+  _id: string;
 };
 
-export const Dish: React.FC = () => {
+interface DishProps {
+  selectedDishId: string | null;
+  onSelectDish: (dishId: string) => void;
+  setSelectedToppings: React.Dispatch<React.SetStateAction<string[]>>; // Add this prop
+}
+
+export const Dish: React.FC<DishProps> = ({ selectedDishId, onSelectDish, setSelectedToppings }) => {
   const [dishList, setDishList] = useState<DishType[]>([]);
-  const [selectedDish, setSelectedDish] = useState<string | null>(null);
-  const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -18,26 +23,22 @@ export const Dish: React.FC = () => {
       .then(response => response.json())
       .then(data => {
         setDishList(data);
-        setLoading(false);
       })
       .catch(err => {
         setError('Không thể tải món ăn. Vui lòng thử lại!');
-        setLoading(false);
       });
   }, []);
 
-  const handleSelectDish = (name: string) => {
-    setSelectedDish(selectedDish === name ? null : name);
+  // const handleSelectDish = (dishId: string) => {
+  //   onSelectDish((dishId === selectedDishId ? null : dishId) as string);
+  // };
+  const handleSelectDish = (dishId: string, dishName: string) => {
+    onSelectDish(dishId);
+    // Reset toppings if a special dish is selected
+    if (['Cẩm Thường', 'Cẩm Đặc Biệt'].includes(dishName)) {
+      setSelectedToppings([]); // Reset toppings if the special dish is selected
+    }
   };
-
-  if (loading) {
-    return (
-      <View style={styles.container}>
-        <ActivityIndicator size="large" color="#007bff" />
-        <Text style={styles.loadingText}>Đang tải món ăn...</Text>
-      </View>
-    );
-  }
 
   if (error) {
     return (
@@ -55,13 +56,13 @@ export const Dish: React.FC = () => {
           <TouchableOpacity
             key={index}
             style={styles.dishItem}
-            onPress={() => handleSelectDish(item.name)}
+            onPress={() => handleSelectDish(item._id, item.name)} // Truyền thêm tên món
           >
             <View style={styles.dishContent}>
               <Ionicons
-                name={selectedDish === item.name ? 'checkbox' : 'checkbox-outline'}
+                name={selectedDishId === item._id ? 'checkbox' : 'checkbox-outline'}
                 size={24}
-                color={selectedDish === item.name ? '#FF9800' : 'black'}
+                color={selectedDishId === item._id ? '#FF9800' : 'black'}
                 style={styles.checkbox}
               />
               <Text style={styles.dishText}>{item.name}</Text>
