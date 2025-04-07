@@ -10,14 +10,17 @@ type TableListProps = {
 const TableList: React.FC<TableListProps> = ({ tables, onSelectTable }) => {
     return (
         <FlatList
-            data={tables}
+            data={tables.filter((t) => t.id !== undefined)}
+            keyExtractor={(item) => item.id?.toString() ?? Math.random().toString()}
             numColumns={2}
-            keyExtractor={(item) => item.id.toString()}
             contentContainerStyle={styles.tableContainer}
             renderItem={({ item }) => (
                 <TouchableOpacity 
                     style={[styles.tableItem, { backgroundColor: "#f0ad4e" }]}
-                    onPress={() => onSelectTable(item.id)}
+                    onPress={() => {
+                        console.log("Bấm vào bàn số", item.id);
+                        onSelectTable(item.id)
+                    }}
                 >
                     <MaterialCommunityIcons name="table-furniture" size={50} color="white" />
                     <Text style={styles.tableText}>Bàn {item.id}</Text>

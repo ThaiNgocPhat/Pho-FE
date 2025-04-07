@@ -50,7 +50,7 @@ const HistoryView: React.FC = () => {
         })
       );
   
-      setOrderList(formatted); // Mỗi đơn là 1 mảng DishType[]
+      setOrderList(formatted);
     } catch (error) {
       console.error('Lỗi khi fetch lịch sử đơn hàng:', error);
     }
@@ -68,7 +68,7 @@ const HistoryView: React.FC = () => {
     return value.toLocaleString('vi-VN') + ' VNĐ';
   };
 
-  const renderOrder = (order: DishType[]) => {
+    const renderOrder = (order: DishType[]) => {
     const orderNumber = generateRandomOrderNumber();
     const totalAmount = getTotalAmount(order);
 
@@ -99,7 +99,7 @@ const HistoryView: React.FC = () => {
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Lịch sử Mua Hàng</Text>
-      <ScrollView contentContainerStyle={styles.cartContainer}>
+      <ScrollView contentContainerStyle={styles.cartContainer} style={{ flex: 1 }}>
         {orderList.map((order, index) => renderOrder(order))}
       </ScrollView>
     </View>
@@ -110,63 +110,82 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 20,
-    backgroundColor: '#f8f9fa',
+    backgroundColor: '#f1f1f1', 
   },
   title: {
     fontSize: 26,
     fontWeight: 'bold',
     textAlign: 'center',
-    marginBottom: 15,
+    marginBottom: 20,
     color: '#333',
   },
   cartContainer: {
-    marginBottom: 20,
+    paddingBottom: 20,
+    flexGrow: 1,
+    width: '100%',
   },
   orderContainer: {
     marginBottom: 20,
+    padding: 20,
+    borderRadius: 12,
+    backgroundColor: '#e0e0e0', 
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 6,
+    elevation: 5, 
+    width: '100%', 
   },
   orderNumber: {
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: 'bold',
-    color: '#5c3d00',
-    marginBottom: 5,
+    color: '#3e2723',
+    marginBottom: 12,
   },
   separator: {
-    height: 1,
-    backgroundColor: '#ccc',
-    marginVertical: 5,
+    height: 0.5,
+    backgroundColor: '#ddd', 
+    marginVertical: 6,
   },
   dishContainer: {
-    marginBottom: 10,
+    marginBottom: 2, // Giảm khoảng cách giữa các món ăn
+    width: '100%',
   },
   dishRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
+    width: '100%',
   },
   dishName: {
-    fontSize: 18,
-    fontWeight: 'bold',
+    fontSize: 17,
+    fontWeight: '500',
     flex: 2,
+    color: '#222',
+  },
+  priceText: {
+    fontSize: 17,
+    fontWeight: '600',
+    flex: 1,
+    textAlign: 'right',
+    color: '#000',
   },
   toppingText: {
     fontSize: 14,
-    color: '#555',
-    marginTop: 3,
-  },
-  priceText: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    flex: 1,
-    textAlign: 'right',
+    color: '#555', 
+    paddingLeft: 4,
   },
   totalContainer: {
-    marginTop: 10,
+    marginTop: 12,
     alignItems: 'flex-end',
+    width: '100%', 
   },
   totalText: {
     fontSize: 18,
     fontWeight: 'bold',
+    color: '#2e7d32',
   },
 });
+
+
 
 export default HistoryView;

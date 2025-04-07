@@ -1,0 +1,34 @@
+  // useEffect(() => {
+  //   const fetchTableData = async () => {
+  //     try {
+  //       const response = await fetch(`${API_ENDPOINTS.GET_ORDER_TABLE}/${tableId}`);
+  //       const data = await response.json();
+  
+  //       console.log("✅ Dữ liệu từ API:", data);
+  
+  //       const normalizedData = {
+  //         ...data,
+  //         groups: Array.isArray(data.groups)
+  //           ? data.groups.map((group: any) => ({
+  //               ...group,
+  //               orders: group.orders.map((order: any) => ({
+  //                 ...order,
+  //                 toppings: Array.isArray(order.toppings)
+  //                   ? order.toppings.map((t: any) =>
+  //                       typeof t === 'string' ? { name: t } : t
+  //                     )
+  //                   : [],
+  //               })),
+  //             }))
+  //           : [],
+  //       };
+  //       setTableData(normalizedData);
+  //     } catch (error) {
+  //       console.error('Lỗi khi lấy dữ liệu bàn:', error);
+  //     } finally {
+  //       setLoading(false);
+  //     }
+  //   };
+  
+  //   fetchTableData();
+  // }, [tableId]);

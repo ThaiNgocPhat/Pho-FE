@@ -9,5 +9,10 @@ export const API_ENDPOINTS = {
   DISH: 'http://10.0.2.2:9999/dish',
   GET_DISH_BY_ID: 'http://10.0.2.2:9999/dish',
   TOPPING: 'http://10.0.2.2:9999/topping',
-  ORDER: 'http://10.0.2.2:9999/orders'
+  ORDER: 'http://10.0.2.2:9999/orders',
+  ORDER_TABLE: 'http://10.0.2.2:9999/table-order',
+  GET_ORDER_TABLE: 'http://10.0.2.2:9999/table-order',
+  TABLE: 'http://10.0.2.2:9999/tables',
+  CREATE_GROUP: 'http://10.0.2.2:9999/group',
+  GET_GROUP: 'http://10.0.2.2:9999/group'
 };
