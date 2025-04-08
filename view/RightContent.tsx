@@ -20,12 +20,18 @@ type RightContentProps = {
   showHistoryHotPot: boolean
   selectedTable: number | null;
   setSelectedTable: (id: number | null) => void;
+  onBack: () => void;
+  groupId: number;
+  fetchData: () => void;
 };
 
 export const RightContent: React.FC<RightContentProps> = ({ showTable, showTakeAway, showHotPot, showCart, showHistory, showHistoryHotPot }) => {
   const [selectedTable, setSelectedTable] = useState<number | null>(null);
   const [showOrderMenu, setShowOrderMenu] = useState(false);
-  const [tables, setTables] = useState<{ id: number }[]>([]);
+  const [selectedGroupId, setSelectedGroupId] = useState<number | null>(null);
+  const [tables, setTables] = useState<{ id: number }[]>([])
+  const [selectedGroupName, setSelectedGroupName] = useState<string>('');
+
 
   useEffect(() => {
     const fetchTables = async () => {
@@ -44,13 +50,35 @@ export const RightContent: React.FC<RightContentProps> = ({ showTable, showTakeA
     fetchTables();
   }, []);
 
-  const handleOrderPress = (groupId: number) => {
-    setShowOrderMenu(true);
+  const fetchData = async () => {
+    if (selectedTable !== null) {
+      try {
+        const response = await fetch(`${API_ENDPOINTS.GET_ORDER_TABLE}?tableId=${selectedTable}`);
+        const data = await response.json();
+        console.log('Reload table data:', data);
+      } catch (error) {
+        console.error('Lỗi reload table data:', error);
+      }
+    }
+  };
+  
+
+  const handleOrderPress = (groupId: number, groupName: string) => {
+    setSelectedGroupId(groupId); 
+    setSelectedGroupName(groupName); 
+    setShowOrderMenu(true);     
   };
   return (
     <View style={styles.rightPanel}>
       {showOrderMenu ? (
-        <OrderMenu onBack={() => setShowOrderMenu(false)} selectedTable={selectedTable!}/>
+        <OrderMenu 
+        selectedTable={selectedTable as number}
+        groupId={selectedGroupId as number}
+        groupName={selectedGroupName} // ← thêm dòng này
+        tableId={selectedTable as number} // ← đảm bảo truyền đúng tableId
+        onBack={() => setShowOrderMenu(false)}
+        fetchData={fetchData}
+      /> 
       ) : selectedTable !== null ? (
         <TableDetails
           tableId={selectedTable}
@@ -74,7 +102,6 @@ export const RightContent: React.FC<RightContentProps> = ({ showTable, showTakeA
       )}
     </View>
   );
-  
 };
 
 const styles = StyleSheet.create({

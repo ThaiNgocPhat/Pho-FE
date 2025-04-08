@@ -7,10 +7,7 @@ import {
   View,
   ScrollView,
   ActivityIndicator,
-  Modal,
-  TextInput,
 } from 'react-native';
-import { NavigationProp } from 'react-navigation';
 
 // Các kiểu dữ liệu
 type ToppingType = {
@@ -39,98 +36,149 @@ type GroupType = {
   orders: DishType[];
 };
 
-// Kiểu dữ liệu trả về từ API
 type TableDataType = {
-  groups: { groupId: string; groupName: string; orders: { name: string; toppings: { name: string }[]; quantity: number; price: number }[] }[];
+  groups: {
+    groupId: string;
+    groupName: string;
+    orders: {
+      dishId: string; 
+      name: string;
+      toppings: { name: string }[];
+      quantity: number;
+      price: number;
+    }[];
+  }[];
 };
 
 type TableDetailsProps = {
   tableId: number;
   onBack: () => void;
-  onOrderPress: (groupId: number) => void;
+  onOrderPress: (groupId: number, groupName: string) => void;
 };
 
 const TableDetails: React.FC<TableDetailsProps> = ({ tableId, onBack, onOrderPress }) => {
-  const [tableData, setTableData] = useState<TableDataType | null>(null);
+  const [tableData, setTableData] = useState<TableDataType>({ groups: [] });
+  const [dishMap, setDishMap] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
-  const [modalVisible, setModalVisible] = useState(false);
-  const [groupName, setGroupName] = useState('');
+
+  useEffect(() => {
+    const fetchDishes = async () => {
+      try {
+        const res = await fetch(API_ENDPOINTS.DISH);
+        const data: DishType[] = await res.json();
+        const map = Object.fromEntries(data.map((dish) => [dish._id, dish.name]));
+        setDishMap(map);
+      } catch (err) {
+        console.error('❌ Lỗi khi lấy danh sách món ăn:', err);
+      }
+    };
+  
+    fetchDishes();
+  }, []);
   
 
-  const openCreateGroupModal = () => {
-    setGroupName('');
-    setModalVisible(true);
-  };
-  
-  const createNewGroup = async () => {
-    if (!groupName.trim()) {
-      console.error("Tên nhóm không được để trống.");
-      return;
-    }
-  
+  const fetchData = async () => {
+    setLoading(true);
     try {
+      const response = await fetch(`${API_ENDPOINTS.GET_ORDER_TABLE}?tableId=${tableId}`);
+      const text = await response.text();
+      console.log('📥 Response text:', text);
+      // const data = await response.json();
+      let data;
+      try {
+        data = JSON.parse(text);
+      } catch (jsonError) {
+        console.error('❌ Không thể parse JSON:', jsonError);
+        return;
+      }
+      const groups = (data?.groups || []).map((group: any) => ({
+        ...group,
+        groupName: group.groupName || `Nhóm ${group.groupId}`,
+        orders: group.orders.map((order: any) => ({
+          ...order,
+          toppings: Array.isArray(order.toppings)
+            ? order.toppings.map((t: any) => (typeof t === 'string' ? { name: t } : t))
+            : [],
+        })),
+      }));
+      setTableData({ groups });
+    } catch (error) {
+      console.error('❌ Lỗi khi fetch dữ liệu bàn:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchData();
+  }, [tableId]);
+
+  const createNewGroup = async () => {
+    try {
+      const groupsBefore = tableData?.groups ?? [];
+  
+      const nextGroupId = groupsBefore.length > 0
+        ? Math.max(...groupsBefore.map((g) => parseInt(g.groupId, 10))) + 1
+        : 1;
+  
+      const defaultGroupName = `Nhóm ${nextGroupId}`;
+  
+      const existingGroup = groupsBefore.find((g) => g.groupName === defaultGroupName);
+      if (existingGroup) {
+        console.log('⚠️ Nhóm đã tồn tại, không tạo mới');
+        return;
+      }
+  
+      console.log('📤 Gửi request tạo nhóm:', { groupName: defaultGroupName, tableId });
+  
       const response = await fetch(`${API_ENDPOINTS.CREATE_GROUP}`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ tableId, groupName }), // Gửi tableId và groupName
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ tableId, groupName: defaultGroupName }),
       });
   
-      if (!response.ok) throw new Error('Tạo nhóm mới thất bại');
+      const result = await response.json();
+      console.log('📥 Kết quả response:', response.status, result);
   
-      const newGroup = await response.json();
-      console.log('✅ Nhóm mới:', newGroup);
+      if (!response.ok) throw new Error(result?.message || 'Tạo nhóm mới thất bại');
   
-      setModalVisible(false); // Đóng modal
+      // ✅ Gọi lại fetchData và CẬP NHẬT lại `tableData`
+      const refetch = await fetch(`${API_ENDPOINTS.GET_ORDER_TABLE}?tableId=${tableId}`);
+      const refetchData = await refetch.json();
   
-      // Sau khi tạo nhóm, gọi lại API để lấy lại dữ liệu nhóm cho bàn
-      const res = await fetch(`${API_ENDPOINTS.GET_GROUP}?tableId=${tableId}`);
-      const freshData = await res.json();
-      console.log('Dữ liệu bàn sau khi tạo nhóm mới:', freshData);
-  
-      // Cập nhật lại dữ liệu bàn (cần chắc chắn dữ liệu đúng)
-      if (freshData && freshData.groups) {
-        setTableData(freshData); // Cập nhật lại tableData
-      } else {
-        console.error('Dữ liệu bàn không hợp lệ', freshData);
-      }
+      const groups = (refetchData?.groups || []).map((group: any) => ({
+        ...group,
+        groupName: group.groupName || `Nhóm ${group.groupId}`,
+        orders: group.orders.map((order: any) => ({
+          ...order,
+          toppings: Array.isArray(order.toppings)
+            ? order.toppings.map((t: any) => (typeof t === 'string' ? { name: t } : t))
+            : [],
+        })),
+      }));
+      
+      setTableData({ groups });      
     } catch (error) {
       console.error('❌ Lỗi khi tạo nhóm:', error);
     }
   };
   
-
-
-useEffect(() => {
-  const fetchGroupData = async () => {
-    try {
-      const response = await fetch(`${API_ENDPOINTS.GET_GROUP}?tableId=${tableId}`);
-      const data = await response.json();
-
-      // Nếu dữ liệu trả về là mảng, chuyển thành đối tượng có trường `groups`
-      const normalizedData = Array.isArray(data)
-        ? { groups: data }
-        : data;  // Giả sử backend đã trả về đúng dữ liệu
-
-      setTableData(normalizedData);
-    } catch (error) {
-      console.error('Lỗi khi lấy dữ liệu nhóm:', error);
-    } finally {
-      setLoading(false); // Dừng loading khi dữ liệu đã sẵn sàng
-    }
-  };
-
-  fetchGroupData();
-}, [tableId]);
-
+  
   
   const getTotalAmount = (orders: OrderItemType[]) => {
     return orders.reduce((total, item) => total + item.price * item.quantity, 0);
-  };  
+  };
 
   const formatCurrency = (amount: number) => {
     return amount.toLocaleString('vi-VN') + ' VNĐ';
+  };
+
+  const handleOrderPress = (groupId: string) => {
+    const parsedGroupId = parseInt(groupId, 10);
+    const group = tableData?.groups?.find(group => parseInt(group.groupId, 10) === parsedGroupId);
+    if (group) {
+      onOrderPress(parsedGroupId, group.groupName);
+    }
   };
 
   if (loading) {
@@ -140,87 +188,59 @@ useEffect(() => {
       </View>
     );
   }
-
-  // Sửa hàm handleOrderPress
-  const handleOrderPress = (groupId: string) => {
-    const parsedGroupId = parseInt(groupId, 10);  // Chuyển đổi groupId thành number
-    onOrderPress(parsedGroupId);  // Truyền groupId đã chuyển đổi vào hàm onOrderPress
-  };
-
-  const table = tableData;
-
+  
   return (
     <View style={styles.container}>
       <View style={styles.topButtons}>
         <TouchableOpacity onPress={onBack} style={[styles.button, { marginRight: 10 }]}>
           <Text style={styles.buttonText}>⬅ Quay lại</Text>
         </TouchableOpacity>
-  
-        <TouchableOpacity onPress={openCreateGroupModal} style={[styles.button, styles.orderButton]}>
+
+        <TouchableOpacity onPress={createNewGroup} style={[styles.button, styles.orderButton]}>
           <Text style={styles.buttonText}>🍜 Tạo nhóm mới</Text>
         </TouchableOpacity>
       </View>
-  
+
       <Text style={styles.tableTitle}>Bàn số {tableId}</Text>
-  
-      {table?.groups && table.groups.length > 0 ? (
-      <ScrollView contentContainerStyle={styles.groupListContainer}>
-        {table.groups.map((group) => {
-          const totalAmount = getTotalAmount(group.orders);
-          return (
-            <View key={group.groupId} style={styles.groupItem}>
-              <Text style={styles.groupName}>{group.groupName}</Text>
-              <Text style={styles.totalAmount}>Tổng: {formatCurrency(totalAmount)}</Text>
 
-              <View style={styles.orderDetailsContainer}>
-                {/* Hiển thị các món đã gọi trong nhóm */}
-                {group.orders.map((order, index) => (
-                  <View key={index} style={styles.dishContainer}>
-                    <Text style={styles.dishName}>{order.name}</Text>
-                    <Text style={styles.toppingText}>
-                      Toppings: {order.toppings.map(t => t.name).join(', ')}
-                    </Text>
-                    <Text style={styles.quantityText}>Số lượng: {order.quantity}</Text>
-                    <View style={styles.separator} />
-                  </View>
-                ))}
+      {tableData?.groups?.length > 0 ? (
+        <ScrollView contentContainerStyle={styles.groupListContainer}>
+          {tableData.groups.map((group) => {
+            const totalAmount = getTotalAmount(group.orders);
+            return (
+              <View key={group.groupId} style={styles.groupItem}>
+                <Text style={styles.groupName}>{group.groupName}</Text>
+                <Text style={styles.totalAmount}>Tổng: {formatCurrency(totalAmount)}</Text>
+
+                <View style={styles.orderDetailsContainer}>
+                  {group.orders.length === 0 ? (
+                    <Text style={styles.emptyText}>Chưa có món ăn nào.</Text>
+                  ) : (
+                    group.orders.map((order, index) => (
+                      <View key={index} style={styles.dishContainer}>
+                        <Text style={styles.dishName}>{dishMap[order.dishId] || 'Món không xác định'}</Text>
+                        <Text style={styles.toppingText}>
+                          Toppings: {order.toppings.map(t => t.name).join(', ')}
+                        </Text>
+                        <Text style={styles.quantityText}>Số lượng: {order.quantity}</Text>
+                        <View style={styles.separator} />
+                      </View>
+                    ))
+                  )}
+                </View>
+
+                <TouchableOpacity
+                  onPress={() => handleOrderPress(group.groupId)}
+                  style={styles.callOrderButton}>
+                  <Text style={styles.callOrderText}>🍽 Gọi món</Text>
+                </TouchableOpacity>
               </View>
-
-              <TouchableOpacity
-                onPress={() => handleOrderPress(group.groupId.toString())}
-                style={styles.callOrderButton}>
-                <Text style={styles.callOrderText}>🍽 Gọi món</Text>
-              </TouchableOpacity>
-            </View>
-          );
-        })}
-      </ScrollView>
-    ) : (
-      <Text style={styles.emptyText}>Không có dữ liệu cho bàn này.</Text>
-    )}
-  
-      {/* 💬 Modal tạo nhóm mới */}
-      <Modal visible={modalVisible} transparent animationType="slide">
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContainer}>
-            <Text style={styles.modalTitle}>Nhập tên nhóm</Text>
-            <TextInput
-              value={groupName}
-              onChangeText={setGroupName}
-              style={styles.input}
-              placeholder="VD: Nhóm 1"
-            />
-            <View style={styles.modalButtons}>
-              <TouchableOpacity onPress={() => setModalVisible(false)} style={styles.button}>
-                <Text style={styles.buttonText}>Huỷ</Text>
-              </TouchableOpacity>
-              <TouchableOpacity onPress={createNewGroup} style={styles.button}>
-                <Text style={styles.buttonText}>Tạo</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
-      </Modal>
+            );
+          })}
+        </ScrollView>
+      ) : (
+        <Text style={styles.emptyText}>Không có dữ liệu cho bàn này.</Text>
+      )}
     </View>
   );
 };

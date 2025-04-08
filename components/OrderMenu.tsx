@@ -7,10 +7,23 @@ import { useState } from 'react';
 import { View, StyleSheet, ScrollView, Alert, Button } from 'react-native';
 
 type OrderMenuProps = {
-  onBack: () => void;
   selectedTable: number;
+  groupId: number;
+  groupName: string; // ← thêm dòng này
+  tableId: number;
+  onBack: () => void;
+  fetchData: () => Promise<void>;
 };
-export const OrderMenu: React.FC<OrderMenuProps> = ({onBack, selectedTable}) => {
+
+
+export const OrderMenu: React.FC<OrderMenuProps> = ({
+  onBack,
+  selectedTable,
+  groupId,
+  groupName, 
+  tableId,  
+  fetchData
+}) => {
   const [selectedDishId, setSelectedDishId] = useState<string | null>(null);
   const [selectedToppings, setSelectedToppings] = useState<string[]>([]);
   const [note, setNote] = useState<string>('');
@@ -27,85 +40,86 @@ export const OrderMenu: React.FC<OrderMenuProps> = ({onBack, selectedTable}) => 
       return;
     }
   
-    const cartItem = {
-      dishId: selectedDishId,
-      toppings: selectedToppings,
-      note: note || '',
-      quantity: 1,
-    };
-  
     try {
+      const body = {
+        groupId,
+        dishId: selectedDishId,
+        toppings: selectedToppings,
+        quantity: 1,
+        note: note || '',
+        tableId,  // OK
+        name: groupName || 'Nhóm X',  // OK
+      };
+  
+      console.log('📤 Gửi món vào nhóm:', body);
+  
       const response = await fetch(API_ENDPOINTS.ORDER_TABLE, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          tableId: selectedTable, // Gửi tableId làm groupId
-          items: [cartItem],
-        }),
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
       });
   
-      if (response.ok) {
-        Alert.alert('Thông báo', 'Thêm vào giỏ hàng thành công');
-        setSelectedDishId(null);
-        setSelectedToppings([]);
-        onBack();  // Quay lại trang chi tiết bàn
-      } else {
-        const errorData = await response.json();
-        const errorMessage =
-          typeof errorData.message === 'string'
-            ? errorData.message
-            : JSON.stringify(errorData.message || 'Có lỗi khi thêm vào giỏ hàng');
+      const result = await response.json();
   
-        Alert.alert('Thông báo', errorMessage);
+      if (!response.ok) {
+        throw new Error(result?.message || 'Thêm món thất bại');
       }
+  
+      Alert.alert('✅ Thành công', 'Đã thêm món vào nhóm');
+  
+      setSelectedDishId(null);
+      setSelectedToppings([]);
+      setNote('');
+  
+      if (fetchData) {
+        await fetchData();
+      }
+  
+      onBack();
     } catch (error) {
-      console.error(error);
-      Alert.alert('Thông báo', 'Không thể kết nối đến server. Vui lòng thử lại!');
+      console.error('❌ Lỗi khi thêm món:', error);
+      Alert.alert('Lỗi', 'Không thể thêm món. Vui lòng thử lại!');
     }
   };
   
-  
-
   return (
     <View style={styles.container}>
       <Button title="⬅ Quay lại" onPress={onBack} />
       <ScrollView contentContainerStyle={styles.scrollContent}>
-        <Dish 
+        <Dish
           selectedDishId={selectedDishId}
           onSelectDish={setSelectedDishId}
           setSelectedToppings={setSelectedToppings}
         />
-        <Topping 
+        <Topping
           selectedToppings={selectedToppings}
-          onToggleTopping={(name) => {
+          onToggleTopping={(name) =>
             setSelectedToppings((prev) =>
-              prev.includes(name)
-                ? prev.filter((t) => t !== name)
-                : [...prev, name]
-            );
-          }}
+              prev.includes(name) ? prev.filter((t) => t !== name) : [...prev, name]
+            )
+          }
         />
         <View style={styles.addToCartContainer}>
-          <AddToCartButton onPress={handleAddToCart} note={note} onChangeNote={setNote}/>
+          <AddToCartButton
+            onPress={handleAddToCart}
+            note={note}
+            onChangeNote={setNote}
+          />
         </View>
       </ScrollView>
     </View>
   );
 };
 
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    padding: 16,
   },
   scrollContent: {
-    flexGrow: 1,
+    paddingBottom: 32,
   },
   addToCartContainer: {
-    marginTop: 20,
-    paddingVertical: 20,
-    alignItems: 'center',
+    marginTop: 16,
   },
 });

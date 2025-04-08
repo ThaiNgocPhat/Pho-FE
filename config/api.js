@@ -12,7 +12,6 @@ export const API_ENDPOINTS = {
   ORDER: 'http://10.0.2.2:9999/orders',
   ORDER_TABLE: 'http://10.0.2.2:9999/table-order',
   GET_ORDER_TABLE: 'http://10.0.2.2:9999/table-order',
+  CREATE_GROUP: 'http://10.0.2.2:9999/table-order/create-group',
   TABLE: 'http://10.0.2.2:9999/tables',
-  CREATE_GROUP: 'http://10.0.2.2:9999/group',
-  GET_GROUP: 'http://10.0.2.2:9999/group'
 };

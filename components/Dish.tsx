@@ -28,10 +28,6 @@ export const Dish: React.FC<DishProps> = ({ selectedDishId, onSelectDish, setSel
         setError('Không thể tải món ăn. Vui lòng thử lại!');
       });
   }, []);
-
-  // const handleSelectDish = (dishId: string) => {
-  //   onSelectDish((dishId === selectedDishId ? null : dishId) as string);
-  // };
   const handleSelectDish = (dishId: string, dishName: string) => {
     onSelectDish(dishId);
     if (['Cẩm Thường', 'Cẩm Đặc Biệt'].includes(dishName)) {
