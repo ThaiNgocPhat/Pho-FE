@@ -1,34 +1,90 @@
-  // useEffect(() => {
-  //   const fetchTableData = async () => {
-  //     try {
-  //       const response = await fetch(`${API_ENDPOINTS.GET_ORDER_TABLE}/${tableId}`);
-  //       const data = await response.json();
-  
-  //       console.log("✅ Dữ liệu từ API:", data);
-  
-  //       const normalizedData = {
-  //         ...data,
-  //         groups: Array.isArray(data.groups)
-  //           ? data.groups.map((group: any) => ({
-  //               ...group,
-  //               orders: group.orders.map((order: any) => ({
-  //                 ...order,
-  //                 toppings: Array.isArray(order.toppings)
-  //                   ? order.toppings.map((t: any) =>
-  //                       typeof t === 'string' ? { name: t } : t
-  //                     )
-  //                   : [],
-  //               })),
-  //             }))
-  //           : [],
-  //       };
-  //       setTableData(normalizedData);
-  //     } catch (error) {
-  //       console.error('Lỗi khi lấy dữ liệu bàn:', error);
-  //     } finally {
-  //       setLoading(false);
-  //     }
-  //   };
-  
-  //   fetchTableData();
-  // }, [tableId]);
+MỤC 2: Nút “🗑 Xoá nhóm”
+const handleDeleteGroup = async (groupId: string) => {
+  try {
+    const response = await fetch(`${API_ENDPOINTS.DELETE_GROUP}`, {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        tableId,
+        groupId: parseInt(groupId, 10),
+      }),
+    });
+
+    const result = await response.json();
+    console.log('✅ Đã xoá nhóm:', result);
+    fetchData();
+  } catch (error) {
+    console.error('❌ Lỗi xoá nhóm:', error);
+  }
+};
+
+<TouchableOpacity
+  onPress={() => handleDeleteGroup(group.groupId)}
+  style={styles.deleteGroupButton}>
+  <Text style={styles.callOrderText}>🗑 Xoá nhóm</Text>
+</TouchableOpacity>
+
+
+MỤC 3: Sửa món, Xoá món, Tăng giảm số lượng
+const handleDeleteDish = async (groupId: string, dishId: string) => {
+  try {
+    const response = await fetch(`${API_ENDPOINTS.DELETE_ORDER}`, {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        tableId,
+        groupId: parseInt(groupId, 10),
+        dishId,
+      }),
+    });
+    const result = await response.json();
+    console.log('✅ Món đã xoá:', result);
+    fetchData();
+  } catch (error) {
+    console.error('❌ Lỗi xoá món:', error);
+  }
+};
+
+const handleUpdateQuantity = async (groupId: string, dishId: string, newQuantity: number) => {
+  if (newQuantity <= 0) return;
+  try {
+    const response = await fetch(`${API_ENDPOINTS.UPDATE_ORDER_QUANTITY}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        tableId,
+        groupId: parseInt(groupId, 10),
+        dishId,
+        quantity: newQuantity,
+      }),
+    });
+    const result = await response.json();
+    console.log('✅ Đã cập nhật số lượng:', result);
+    fetchData();
+  } catch (error) {
+    console.error('❌ Lỗi cập nhật số lượng:', error);
+  }
+};
+
+<View style={styles.dishContainer}>
+  <Text style={styles.dishName}>{dishMap[order.dishId] || 'Món không xác định'}</Text>
+  <Text style={styles.toppingText}>Toppings: {order.toppings.map(t => t.name).join(', ')}</Text>
+
+  <View style={styles.quantityRow}>
+    <TouchableOpacity onPress={() => handleUpdateQuantity(group.groupId, order.dishId, order.quantity - 1)}>
+      <Text style={styles.quantityButton}>➖</Text>
+    </TouchableOpacity>
+
+    <Text style={styles.quantityText}>{order.quantity}</Text>
+
+    <TouchableOpacity onPress={() => handleUpdateQuantity(group.groupId, order.dishId, order.quantity + 1)}>
+      <Text style={styles.quantityButton}>➕</Text>
+    </TouchableOpacity>
+
+    <TouchableOpacity onPress={() => handleDeleteDish(group.groupId, order.dishId)}>
+      <Text style={styles.removeButton}>❌</Text>
+    </TouchableOpacity>
+  </View>
+</View>
+
+

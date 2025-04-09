@@ -7,7 +7,11 @@ import {
   View,
   ScrollView,
   ActivityIndicator,
+  TextInput,
+  Alert,
 } from 'react-native';
+import Modal from 'react-native-modal';
+
 
 // Các kiểu dữ liệu
 type ToppingType = {
@@ -38,6 +42,7 @@ type GroupType = {
 
 type TableDataType = {
   groups: {
+    _id: string
     groupId: string;
     groupName: string;
     orders: {
@@ -50,6 +55,7 @@ type TableDataType = {
   }[];
 };
 
+
 type TableDetailsProps = {
   tableId: number;
   onBack: () => void;
@@ -59,7 +65,11 @@ type TableDetailsProps = {
 const TableDetails: React.FC<TableDetailsProps> = ({ tableId, onBack, onOrderPress }) => {
   const [tableData, setTableData] = useState<TableDataType>({ groups: [] });
   const [dishMap, setDishMap] = useState<Record<string, string>>({});
+  const [selectedGroupIdForPayment, setSelectedGroupIdForPayment] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [selectedGroupId, setSelectedGroupId] = useState<string | null>(null);
+
 
   useEffect(() => {
     const fetchDishes = async () => {
@@ -94,6 +104,7 @@ const TableDetails: React.FC<TableDetailsProps> = ({ tableId, onBack, onOrderPre
       const groups = (data?.groups || []).map((group: any) => ({
         ...group,
         groupName: group.groupName || `Nhóm ${group.groupId}`,
+        _id: group._id,
         orders: group.orders.map((order: any) => ({
           ...order,
           toppings: Array.isArray(order.toppings)
@@ -188,6 +199,78 @@ const TableDetails: React.FC<TableDetailsProps> = ({ tableId, onBack, onOrderPre
       </View>
     );
   }
+  const handleConfirmPayment = async () => {
+    if (!selectedGroupIdForPayment) return;
+    try {
+      const response = await fetch(`${API_ENDPOINTS.PAY_MENT}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          tableId,
+          groupId: parseInt(selectedGroupIdForPayment, 10),
+        }),
+      });
+  
+      const result = await response.json();
+      console.log('✅ Thanh toán thành công:', result);
+  
+      setSelectedGroupIdForPayment(null);
+      fetchData(); // reload lại data
+    } catch (error) {
+      console.error('❌ Lỗi khi thanh toán:', error);
+    }
+  };
+  
+  const getSelectedGroupTotalAmount = () => {
+    const group = tableData.groups.find(g => g.groupId === selectedGroupIdForPayment);
+    if (!group) return 0;
+    return getTotalAmount(group.orders);
+  };
+
+  const handleDeleteGroup = async (groupId: string) => {
+    try {
+      const response = await fetch(`${API_ENDPOINTS.DELETE_GROUP}`, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ tableId, groupId: parseInt(groupId, 10) }),
+      });
+  
+      const result = await response.json();
+      console.log('🗑 Nhóm đã xoá:', result);
+  
+      fetchData(); // Reload lại dữ liệu sau khi xoá
+    } catch (error) {
+      console.error('❌ Lỗi khi xoá nhóm:', error);
+    }
+  };
+  
+  const handleDeleteDish = async (
+    tableId: number,
+    groupId: number,
+    dishId: string
+  ): Promise<void> => {
+    try {
+      const response = await fetch(`${API_ENDPOINTS.DELETE_DISH}`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ tableId, groupId, dishId }),
+      });
+  
+      if (!response.ok) {
+        const error = await response.text();
+        throw new Error(error);
+      }
+  
+      console.log('✅ Đã xoá món khỏi nhóm');
+      fetchData(); // reload dữ liệu
+    } catch (err) {
+      console.error('❌ Lỗi khi xoá món:', err);
+      Alert.alert('Lỗi', 'Không thể xoá món');
+    }
+  };
+  
   
   return (
     <View style={styles.container}>
@@ -209,7 +292,20 @@ const TableDetails: React.FC<TableDetailsProps> = ({ tableId, onBack, onOrderPre
             const totalAmount = getTotalAmount(group.orders);
             return (
               <View key={group.groupId} style={styles.groupItem}>
-                <Text style={styles.groupName}>{group.groupName}</Text>
+                <View style={styles.groupHeader}>
+                  <Text style={styles.groupName} numberOfLines={1} ellipsizeMode="tail">
+                    {group.groupName}
+                  </Text>
+                  <TouchableOpacity
+                    onPress={() => {
+                      setSelectedGroupId(group.groupId);
+                      setShowDeleteModal(true);
+                    }}
+                    style={styles.deleteButton}
+                  >
+                    <Text style={styles.deleteIcon}>❌</Text>
+                  </TouchableOpacity>
+                </View>
                 <Text style={styles.totalAmount}>Tổng: {formatCurrency(totalAmount)}</Text>
 
                 <View style={styles.orderDetailsContainer}>
@@ -218,22 +314,48 @@ const TableDetails: React.FC<TableDetailsProps> = ({ tableId, onBack, onOrderPre
                   ) : (
                     group.orders.map((order, index) => (
                       <View key={index} style={styles.dishContainer}>
-                        <Text style={styles.dishName}>{dishMap[order.dishId] || 'Món không xác định'}</Text>
+                        <View style={styles.rowBetween}>
+                          <Text style={styles.dishName}>
+                            {dishMap[order.dishId] || 'Món không xác định'}
+                          </Text>
+                          <TouchableOpacity
+                            onPress={() =>
+                              Alert.alert('Xác nhận xoá', 'Bạn có chắc chắn muốn xoá món này?', [
+                                { text: 'Huỷ', style: 'cancel' },
+                                {
+                                  text: 'Xoá',
+                                  style: 'destructive',
+                                  onPress: () =>
+                                    handleDeleteDish(tableId, Number(group.groupId), order.dishId),
+                                },
+                              ])
+                            }>
+                            <Text style={styles.deleteIcon}>🗑️</Text>
+                          </TouchableOpacity>
+                        </View>
                         <Text style={styles.toppingText}>
-                          Toppings: {order.toppings.map(t => t.name).join(', ')}
+                          Toppings: {order.toppings.map((t) => t.name).join(', ')}
                         </Text>
                         <Text style={styles.quantityText}>Số lượng: {order.quantity}</Text>
                         <View style={styles.separator} />
                       </View>
-                    ))
+                    ))                    
                   )}
                 </View>
 
-                <TouchableOpacity
-                  onPress={() => handleOrderPress(group.groupId)}
-                  style={styles.callOrderButton}>
-                  <Text style={styles.callOrderText}>🍽 Gọi món</Text>
-                </TouchableOpacity>
+                <View style={styles.buttonContainer}>
+                  <TouchableOpacity
+                    onPress={() => handleOrderPress(group.groupId)}
+                    style={styles.callOrderButton}>
+                    <Text style={styles.callOrderText}>🍽 Gọi món</Text>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
+                    onPress={() => setSelectedGroupIdForPayment(group.groupId)}
+                    style={styles.payButton}>
+                    <Text style={styles.callOrderText}>💸 Thanh toán</Text>
+                  </TouchableOpacity>
+                </View>
               </View>
             );
           })}
@@ -241,6 +363,56 @@ const TableDetails: React.FC<TableDetailsProps> = ({ tableId, onBack, onOrderPre
       ) : (
         <Text style={styles.emptyText}>Không có dữ liệu cho bàn này.</Text>
       )}
+      <Modal
+        isVisible={!!selectedGroupIdForPayment}
+        animationIn="fadeIn"
+        animationOut="fadeOut"
+        onBackdropPress={() => setSelectedGroupIdForPayment(null)}
+        useNativeDriver
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+          <Text style={styles.modalTitle}>
+            Bạn có chắc chắn muốn thanh toán nhóm này không?{'\n'}
+            Tổng tiền: {formatCurrency(getSelectedGroupTotalAmount())}
+          </Text>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 10 }}>
+              <TouchableOpacity onPress={handleConfirmPayment} style={styles.confirmButton}>
+                <Text style={styles.confirmButtonText}>✅ Xác nhận</Text>
+              </TouchableOpacity>
+              <TouchableOpacity onPress={() => setSelectedGroupIdForPayment(null)} style={styles.cancelButton}>
+                <Text style={styles.cancelButtonText}>✖ Huỷ</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+      <Modal isVisible={showDeleteModal}>
+        <View style={styles.modalContainer}>
+          <Text style={styles.modalTitle}>Xác nhận xoá nhóm</Text>
+          <Text style={styles.modalMessage}>Bạn có chắc chắn muốn xoá nhóm này không?</Text>
+
+          <View style={styles.modalButtons}>
+            <TouchableOpacity
+              onPress={() => setShowDeleteModal(false)}
+              style={[styles.modalButton, styles.cancelButtonStyle]}
+            >
+              <Text style={styles.cancelText}>Huỷ</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={() => {
+                if (selectedGroupId) {
+                  handleDeleteGroup(selectedGroupId);
+                }
+                setShowDeleteModal(false);
+              }}
+              style={[styles.modalButton, styles.deleteButtonStyle]}
+            >
+              <Text style={styles.deleteText}>Xoá</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 };
@@ -295,12 +467,6 @@ const styles = StyleSheet.create({
     elevation: 3,
     width: '100%',
   },
-  groupName: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#333',
-    width: '100%',
-  },
   totalAmount: {
     fontSize: 16,
     fontWeight: 'bold',
@@ -318,7 +484,7 @@ const styles = StyleSheet.create({
   dishName: {
     fontSize: 16,
     fontWeight: 'bold',
-    width: '100%',
+    width: '90%',
   },
   quantityText: {
     fontSize: 14,
@@ -347,22 +513,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  
-  modalContainer: {
-    backgroundColor: '#fff',
-    padding: 20,
-    borderRadius: 10,
-    width: '80%',
-    elevation: 10,
-  },
-  
-  modalTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginBottom: 10,
-    textAlign: 'center',
-  },
-  
   input: {
     borderWidth: 1,
     borderColor: '#ccc',
@@ -371,26 +521,154 @@ const styles = StyleSheet.create({
     marginBottom: 15,
     fontSize: 16,
   },
-  
-  modalButtons: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-  callOrderButton: {
-    backgroundColor: '#28a745',
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    borderRadius: 10,
-    marginTop: 10,
-    alignSelf: 'flex-start',
-  },
-  
   callOrderText: {
     color: '#fff',
     fontSize: 16,
     fontWeight: '600',
   },
+  modalContent: {
+    width: '80%',
+    backgroundColor: '#fff',
+    padding: 24,
+    borderRadius: 12,
+    alignItems: 'center',
+  },
+  confirmButton: {
+    backgroundColor: '#4CAF50',
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 8,
+    marginRight: 8,
+  },
+  confirmButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  cancelButton: {
+    backgroundColor: '#F44336',
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 8,
+  },
+  cancelButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  buttonContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: 10,
+    gap: 10, // nếu RN >= 0.71
+  },
   
+  callOrderButton: {
+    flex: 1,
+    backgroundColor: '#28a745',
+    paddingVertical: 10,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  
+  payButton: {
+    flex: 1,
+    backgroundColor: '#FF9800',
+    paddingVertical: 10,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  groupHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 5,
+  },
+  groupName: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    flex: 1,
+    color: '#333',
+  },
+  
+  deleteButton: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+  },
+  
+  deleteIcon: {
+    fontSize: 18,
+    color: 'red',
+  },
+  modalContainer: {
+    backgroundColor: '#fff',
+    padding: 20,
+    borderRadius: 12,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 10,
+  },
+  
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    marginBottom: 10,
+    color: '#333',
+    textAlign: 'center',
+  },
+  
+  modalMessage: {
+    fontSize: 16,
+    marginBottom: 20,
+    color: '#555',
+    textAlign: 'center',
+  },
+  
+  modalButtons: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    width: '100%',
+  },
+  
+  modalButton: {
+    flex: 1,
+    paddingVertical: 10,
+    borderRadius: 8,
+    alignItems: 'center',
+    marginHorizontal: 5,
+  },
+  
+  cancelButtonStyle: {
+    backgroundColor: '#E0E0E0',
+  },
+  
+  deleteButtonStyle: {
+    backgroundColor: '#FF4D4D',
+  },
+  
+  cancelText: {
+    color: '#333',
+    fontWeight: '600',
+  },
+  
+  deleteText: {
+    color: '#fff',
+    fontWeight: '600',
+  },  
+  editIcon: {
+    fontSize: 18,
+    color: '#007bff',
+    marginLeft: 10,
+  },
+  rowBetween: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    alignItems: 'center',
+  },  
 });
 
 export default TableDetails;
