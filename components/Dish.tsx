@@ -89,32 +89,33 @@ const styles = StyleSheet.create({
   },
   dishItem: {
     width: '48%',
-    padding: 15,
+    paddingVertical: 12,
+    paddingHorizontal: 10,
     marginBottom: 15,
-    borderRadius: 10,
-    backgroundColor: '#ffebcc',
+    borderRadius: 12,
+    backgroundColor: '#fff3e0',
+    flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 2, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 5,
-    elevation: 5,
+    borderWidth: 1,
+    borderColor: '#ffa726',
   },
+  
   dishContent: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'flex-start',
-    width: '100%',
   },
+  
   checkbox: {
     marginRight: 10,
   },
   dishText: {
-    fontSize: 18,
-    fontWeight: 'bold',
+    fontSize: 16,
+    fontWeight: '500',
     color: '#5c3d00',
+    flexShrink: 1, 
   },
+  
   loadingText: {
     fontSize: 18,
     color: '#007bff',

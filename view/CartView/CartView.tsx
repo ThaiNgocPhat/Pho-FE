@@ -59,36 +59,17 @@ const CartView: React.FC = () => {
   
   const handlePayment = async () => {
     try {
-      const payload = cartItems
-        .filter(item => item.quantity > 0)
-        .map((item) => ({
-          dishId: item.dishId, 
-          quantity: item.quantity,
-          toppings: item.toppings.map((t) => t.name),
-        }));
-  
-      const res = await fetch(`${API_ENDPOINTS.ORDER}`, {
+      await fetch(`${API_ENDPOINTS.ORDER}/checkout`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ items: payload }),
       });
   
-      const data = await res.json();
-      Alert.alert('Thông báo', 'Đặt hàng thành công!')
+      Alert.alert('Thông báo', 'Đặt hàng thành công!');
       setCartItems([]);
       fetchCart(); 
     } catch (err) {
       console.error('Lỗi khi thanh toán:', err);
     }
-  };
-  
-  
-  const totalAmount = cartItems.reduce(
-    (total, item) => total + item.price * item.quantity,
-    0
-  );
+  };  
 
   const formatPrice = (price: number) => {
     return price.toLocaleString('vi-VN');
@@ -167,9 +148,6 @@ const CartView: React.FC = () => {
       )}
 
       <View style={styles.totalContainer}>
-        <Text style={styles.totalText}>
-          Tổng tiền: {formatPrice(totalAmount)} VNĐ
-        </Text>
         <TouchableOpacity style={styles.paymentButton} onPress={handlePayment}>
           <Text style={styles.paymentButtonText}>Thanh toán</Text>
         </TouchableOpacity>

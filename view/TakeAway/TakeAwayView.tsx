@@ -5,6 +5,7 @@ import { API_ENDPOINTS } from '@/config/api';
 import { DISH_TOPPING_RULES } from '@/config/constants';
 import { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, Alert } from 'react-native';
+import socket from '../../utils/socket.js'
 
 type TakeAwayViewProps = {};
 export const TakeAwayView: React.FC<TakeAwayViewProps> = () => {
@@ -12,28 +13,31 @@ export const TakeAwayView: React.FC<TakeAwayViewProps> = () => {
   const [selectedToppings, setSelectedToppings] = useState<string[]>([]);
   const [note, setNote] = useState<string>('');
   
-
-  
   const handleAddToCart = async () => {
     if (!selectedDishId) {
       Alert.alert('Thông báo', 'Vui lòng chọn món ăn!');
       return;
     }
+  
     const toppingRule = DISH_TOPPING_RULES[selectedDishId] || 'requiredTopping';
     if (toppingRule === 'requiredTopping' && selectedToppings.length === 0) {
       Alert.alert('Thông báo', 'Vui lòng chọn topping!');
       return;
     }
-
+  
     const cartItem = {
       dishId: selectedDishId,
       toppings: selectedToppings,
       note: note || '',
-      quantity: 1, 
-    };
+      quantity: 1,
+    };    
+  
+    console.log('Dữ liệu gửi đi:', cartItem);
   
     try {
-      const response = await fetch(API_ENDPOINTS.ADD_TO_CART, {
+      socket.emit('sendOrder', cartItem);
+  
+      const res = await fetch(API_ENDPOINTS.ADD_TO_CART, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -41,22 +45,23 @@ export const TakeAwayView: React.FC<TakeAwayViewProps> = () => {
         body: JSON.stringify(cartItem),
       });
   
-      if (response.ok) {
+      console.log('Mã phản hồi từ server:', res.status);  
+      const responseData = await res.json(); 
+      console.log('Response từ server:', responseData);
+  
+      if (res.ok) {
         Alert.alert('Thông báo', 'Thêm vào giỏ hàng thành công');
         setSelectedDishId(null);
         setSelectedToppings([]);
       } else {
-        const errorData = await response.json();
-        const errorMessage = errorData.message || 'Có lỗi khi thêm vào giỏ hàng';
-        Alert.alert('Thông báo', errorMessage);
+        Alert.alert('Lỗi', `Không thể lưu vào giỏ hàng! Chi tiết: ${responseData.message || 'Không xác định'}`);
       }
     } catch (error) {
-      console.error(error);
+      console.error('Lỗi kết nối:', error);  // Log lỗi kết nối
       Alert.alert('Thông báo', 'Không thể kết nối đến server. Vui lòng thử lại!');
     }
   };
   
-
   return (
     <View style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollContent}>

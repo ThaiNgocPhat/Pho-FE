@@ -1,90 +1,42 @@
-MỤC 2: Nút “🗑 Xoá nhóm”
-const handleDeleteGroup = async (groupId: string) => {
-  try {
-    const response = await fetch(`${API_ENDPOINTS.DELETE_GROUP}`, {
-      method: 'DELETE',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        tableId,
-        groupId: parseInt(groupId, 10),
-      }),
-    });
+  
+  // const handleAddToCart = async () => {
+  //   if (!selectedDishId) {
+  //     Alert.alert('Thông báo', 'Vui lòng chọn món ăn!');
+  //     return;
+  //   }
+  //   const toppingRule = DISH_TOPPING_RULES[selectedDishId] || 'requiredTopping';
+  //   if (toppingRule === 'requiredTopping' && selectedToppings.length === 0) {
+  //     Alert.alert('Thông báo', 'Vui lòng chọn topping!');
+  //     return;
+  //   }
 
-    const result = await response.json();
-    console.log('✅ Đã xoá nhóm:', result);
-    fetchData();
-  } catch (error) {
-    console.error('❌ Lỗi xoá nhóm:', error);
-  }
-};
-
-<TouchableOpacity
-  onPress={() => handleDeleteGroup(group.groupId)}
-  style={styles.deleteGroupButton}>
-  <Text style={styles.callOrderText}>🗑 Xoá nhóm</Text>
-</TouchableOpacity>
-
-
-MỤC 3: Sửa món, Xoá món, Tăng giảm số lượng
-const handleDeleteDish = async (groupId: string, dishId: string) => {
-  try {
-    const response = await fetch(`${API_ENDPOINTS.DELETE_ORDER}`, {
-      method: 'DELETE',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        tableId,
-        groupId: parseInt(groupId, 10),
-        dishId,
-      }),
-    });
-    const result = await response.json();
-    console.log('✅ Món đã xoá:', result);
-    fetchData();
-  } catch (error) {
-    console.error('❌ Lỗi xoá món:', error);
-  }
-};
-
-const handleUpdateQuantity = async (groupId: string, dishId: string, newQuantity: number) => {
-  if (newQuantity <= 0) return;
-  try {
-    const response = await fetch(`${API_ENDPOINTS.UPDATE_ORDER_QUANTITY}`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        tableId,
-        groupId: parseInt(groupId, 10),
-        dishId,
-        quantity: newQuantity,
-      }),
-    });
-    const result = await response.json();
-    console.log('✅ Đã cập nhật số lượng:', result);
-    fetchData();
-  } catch (error) {
-    console.error('❌ Lỗi cập nhật số lượng:', error);
-  }
-};
-
-<View style={styles.dishContainer}>
-  <Text style={styles.dishName}>{dishMap[order.dishId] || 'Món không xác định'}</Text>
-  <Text style={styles.toppingText}>Toppings: {order.toppings.map(t => t.name).join(', ')}</Text>
-
-  <View style={styles.quantityRow}>
-    <TouchableOpacity onPress={() => handleUpdateQuantity(group.groupId, order.dishId, order.quantity - 1)}>
-      <Text style={styles.quantityButton}>➖</Text>
-    </TouchableOpacity>
-
-    <Text style={styles.quantityText}>{order.quantity}</Text>
-
-    <TouchableOpacity onPress={() => handleUpdateQuantity(group.groupId, order.dishId, order.quantity + 1)}>
-      <Text style={styles.quantityButton}>➕</Text>
-    </TouchableOpacity>
-
-    <TouchableOpacity onPress={() => handleDeleteDish(group.groupId, order.dishId)}>
-      <Text style={styles.removeButton}>❌</Text>
-    </TouchableOpacity>
-  </View>
-</View>
-
-
+  //   const cartItem = {
+  //     dishId: selectedDishId,
+  //     toppings: selectedToppings,
+  //     note: note || '',
+  //     quantity: 1, 
+  //   };
+  
+  //   try {
+  //     const response = await fetch(API_ENDPOINTS.ADD_TO_CART, {
+  //       method: 'POST',
+  //       headers: {
+  //         'Content-Type': 'application/json',
+  //       },
+  //       body: JSON.stringify(cartItem),
+  //     });
+  
+  //     if (response.ok) {
+  //       Alert.alert('Thông báo', 'Thêm vào giỏ hàng thành công');
+  //       setSelectedDishId(null);
+  //       setSelectedToppings([]);
+  //     } else {
+  //       const errorData = await response.json();
+  //       const errorMessage = errorData.message || 'Có lỗi khi thêm vào giỏ hàng';
+  //       Alert.alert('Thông báo', errorMessage);
+  //     }
+  //   } catch (error) {
+  //     console.error(error);
+  //     Alert.alert('Thông báo', 'Không thể kết nối đến server. Vui lòng thử lại!');
+  //   }
+  // };

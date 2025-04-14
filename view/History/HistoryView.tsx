@@ -88,9 +88,6 @@ const HistoryView: React.FC = () => {
             <View style={styles.separator} />
           </View>
         ))}
-        <View style={styles.totalContainer}>
-          <Text style={styles.totalText}>Tổng tiền: {formatCurrency(totalAmount)}</Text>
-        </View>
         <View style={styles.separator} />
       </View>
     );
