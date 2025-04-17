@@ -1,7 +1,7 @@
 // src/utils/socket.js
 import { io } from 'socket.io-client';
 
-const socket = io('http://localhost:7777');
+const socket = io('http://localhost:1234');
 
 // Lắng nghe sự kiện "orderReceived"
 socket.on('orderReceived', (data) => {

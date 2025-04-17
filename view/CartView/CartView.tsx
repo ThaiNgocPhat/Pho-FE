@@ -59,15 +59,25 @@ const CartView: React.FC = () => {
   
   const handlePayment = async () => {
     try {
-      await fetch(`${API_ENDPOINTS.ORDER}/checkout`, {
+      const response = await fetch(`${API_ENDPOINTS.ORDER}/checkout`, {
         method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({}), // Không cần truyền type nữa
       });
   
-      Alert.alert('Thông báo', 'Đặt hàng thành công!');
-      setCartItems([]);
-      fetchCart(); 
+      if (response.ok) {
+        Alert.alert('Thông báo', 'Đặt hàng thành công!');
+        setCartItems([]);
+        fetchCart();
+      } else {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Thanh toán thất bại');
+      }
     } catch (err) {
       console.error('Lỗi khi thanh toán:', err);
+      Alert.alert('Lỗi', 'Có lỗi xảy ra khi thanh toán. Vui lòng thử lại.');
     }
   };  
 

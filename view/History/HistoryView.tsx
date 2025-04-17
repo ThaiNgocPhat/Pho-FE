@@ -1,6 +1,193 @@
+// import { API_ENDPOINTS } from '@/config/api';
+// import React, { useEffect, useState } from 'react';
+// import { View, Text, StyleSheet, ScrollView, Dimensions, TouchableOpacity } from 'react-native';
+
+// type ToppingType = {
+//   name: string;
+// };
+
+// type DishType = {
+//   name: string;
+//   toppings: ToppingType[];
+//   quantity: number;
+//   note?: string;
+// };
+
+// type OrderType = {
+//   _id: string
+//   orderNumber: string;
+  
+//   items: DishType[];
+// };
+
+// const screenWidth = Dimensions.get('window').width;
+
+// const HistoryView: React.FC = () => {
+//   const [orderList, setOrderList] = useState<OrderType[]>([]);
+
+//   useEffect(() => {
+//     fetchOrderHistory();
+//   }, []);
+
+//   const fetchOrderHistory = async () => {
+//     try {
+//       const response = await fetch(API_ENDPOINTS.GET_ORDER);
+//       const data = await response.json();
+
+//       if (Array.isArray(data) && data.length > 0) {
+//         const formatted = data.map((order: any, index: number) => {
+//           const orderItems = order.items.map((item: any) => ({
+//             name: item.dish || item.name,
+//             quantity: item.quantity,
+//             note: item.note || '',
+//             toppings: typeof item.toppings === 'string'
+//               ? item.toppings.split(',').map((t: string) => ({ name: t.trim() }))
+//               : [],
+//           }));
+//           return {
+//             _id: order._id,
+//             orderNumber: String(index + 1).padStart(3, '0'),
+//             items: orderItems,
+//           };
+//         });
+
+//         setOrderList(formatted);
+//       } else {
+//         console.error('Dữ liệu không hợp lệ hoặc không có dữ liệu');
+//         setOrderList([]);
+//       }
+//     } catch (error) {
+//       console.error('Lỗi khi fetch lịch sử đơn hàng:', error);
+//       setOrderList([]);
+//     }
+//   };
+
+//   const renderOrder = (order: OrderType) => {
+//     const handleCompleteOrder = async (orderId: string) => {
+//       try {
+//         await fetch(`${API_ENDPOINTS.DELETE_ORDER}/${orderId}`, { method: 'DELETE' });
+//         // Cập nhật lại danh sách sau khi xoá
+//         fetchOrderHistory();
+//       } catch (error) {
+//         console.error('Lỗi xoá đơn hàng:', error);
+//       }
+//     };
+  
+//     return (
+//       <View style={styles.orderContainer} key={order._id}>
+//         <Text style={styles.orderNumber}>Mã đơn hàng: {String(order._id).slice(-3)}</Text>
+//         <View style={styles.separator} />
+//         {order.items.map((item, index) => (
+//           <View key={index} style={styles.dishContainer}>
+//             <View style={styles.dishRow}>
+//               <Text style={styles.dishName}>
+//                 {item.name} (x{item.quantity})
+//               </Text>
+//             </View>
+//             <Text style={styles.toppingText}>
+//               {Array.isArray(item.toppings) && item.toppings.length > 0
+//                 ? item.toppings.map((topping) => topping.name).join(', ')
+//                 : 'Không có topping'}
+//             </Text>
+//             {item.note && <Text style={styles.noteText}>Ghi chú: {item.note}</Text>}
+//             <View style={styles.separator} />
+//           </View>
+//         ))}
+  
+//         <TouchableOpacity
+//           style={styles.completeButton}
+//           onPress={() => handleCompleteOrder(order._id)}
+//         >
+//           <Text style={styles.buttonText}>Hoàn thành</Text>
+//         </TouchableOpacity>
+//       </View>
+//     );
+//   };
+
+//   return (
+//     <View style={styles.container}>
+//       <Text style={styles.title}>Lịch sử Mua Hàng</Text>
+//       <ScrollView contentContainerStyle={styles.cartContainer} style={{ flex: 1 }}>
+//         {orderList.length > 0 ? (
+//           orderList.map((order) => renderOrder(order))
+//         ) : (
+//           <Text style={styles.noOrderText}>Không có lịch sử đơn hàng</Text>
+//         )}
+//       </ScrollView>
+//     </View>
+//   );
+// };
+
+// const styles = StyleSheet.create({
+//   container: { padding: 16 },
+//   title: { fontSize: 24, fontWeight: 'bold', marginBottom: 12 },
+//   orderContainer: {
+//     backgroundColor: '#f0f0f0',
+//     borderRadius: 10,
+//     padding: 12,
+//     marginBottom: 16,
+//     width: '100%',
+//   },
+//   orderNumber: { fontSize: 16, fontWeight: '600', marginBottom: 8 },
+//   dishContainer: {
+//     backgroundColor: '#fff',
+//     padding: 12,
+//     marginBottom: 8,
+//     borderRadius: 6,
+//     width: '100%',
+//   },
+//   dishRow: {
+//     flexDirection: 'row',
+//     justifyContent: 'space-between',
+//   },
+//   dishName: {
+//     fontWeight: 'bold',
+//     fontSize: 16,
+//   },
+//   toppingText: {
+//     fontSize: 13,
+//     color: 'gray',
+//     marginTop: 4,
+//   },
+//   noteText: {
+//     fontSize: 13,
+//     color: '#444',
+//     marginTop: 4,
+//   },
+//   separator: {
+//     height: 1,
+//     backgroundColor: '#ccc',
+//     marginVertical: 8,
+//   },
+//   noOrderText: {
+//     fontSize: 16,
+//     textAlign: 'center',
+//     color: 'gray',
+//     marginTop: 20,
+//   },
+//   cartContainer: {
+//     paddingBottom: 16,
+//     alignItems: 'center',
+//   },
+//   completeButton: {
+//     backgroundColor: 'green',
+//     padding: 10,
+//     borderRadius: 8,
+//     alignItems: 'center',
+//     marginTop: 8,
+//   },
+//   buttonText: {
+//     color: '#fff',
+//     fontWeight: 'bold',
+//   },
+  
+// });
+
+// export default HistoryView;
+
 import { API_ENDPOINTS } from '@/config/api';
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Dimensions, TouchableOpacity } from 'react-native';
 
 type ToppingType = {
   name: string;
@@ -8,87 +195,100 @@ type ToppingType = {
 
 type DishType = {
   name: string;
-  price: number;
   toppings: ToppingType[];
   quantity: number;
+  note?: string;
 };
 
-const formatCurrency = (amount: number) => {
-  return amount.toLocaleString('vi-VN') + ' VNĐ';
+type OrderType = {
+  _id: string;
+  orderNumber: string;
+  orderType: string;  // Thêm trường orderType để xác định "Mang về" hay "Tại bàn"
+  items: DishType[];
 };
+
+const screenWidth = Dimensions.get('window').width;
 
 const HistoryView: React.FC = () => {
-  const [orderList, setOrderList] = useState<DishType[][]>([]);
+  const [orderList, setOrderList] = useState<OrderType[]>([]);
 
   useEffect(() => {
     fetchOrderHistory();
   }, []);
-  
+
   const fetchOrderHistory = async () => {
     try {
       const response = await fetch(API_ENDPOINTS.GET_ORDER);
       const data = await response.json();
-  
-      const formatted = await Promise.all(
-        data.map(async (order: { items: any[] }) => {
-          const orderItems = await Promise.all(
-            order.items.map(async (item) => {
-              const dishRes = await fetch(`${API_ENDPOINTS.GET_DISH_BY_ID}/${item.dishId}`);
-              const dish = await dishRes.json();
-  
-              return {
-                dishId: item.dishId,
-                name: dish.name,
-                price: dish.price,
-                toppings: item.toppings.map((t: string) => ({ name: t })),
-                quantity: item.quantity,
-              };
-            })
-          );
-  
-          return orderItems;
-        })
-      );
-  
-      setOrderList(formatted);
+
+      if (Array.isArray(data) && data.length > 0) {
+        const formatted = data.map((order: any, index: number) => {
+          const orderItems = order.items.map((item: any) => ({
+            name: item.dish || item.name,
+            quantity: item.quantity,
+            note: item.note || '',
+            toppings: typeof item.toppings === 'string'
+              ? item.toppings.split(',').map((t: string) => ({ name: t.trim() }))
+              : [],
+          }));
+          return {
+            _id: order._id,
+            orderNumber: String(index + 1).padStart(3, '0'),
+            orderType: order.orderType || 'Mang về',  // Gán mặc định nếu không có orderType
+            items: orderItems,
+          };
+        });
+
+        setOrderList(formatted);
+      } else {
+        console.error('Dữ liệu không hợp lệ hoặc không có dữ liệu');
+        setOrderList([]);
+      }
     } catch (error) {
       console.error('Lỗi khi fetch lịch sử đơn hàng:', error);
+      setOrderList([]);
     }
   };
 
-  const generateRandomOrderNumber = () => {
-    return Math.floor(Math.random() * 900) + 100; 
-  };
-
-  const getTotalAmount = (order: DishType[]) => {
-    return order.reduce((total, item) => total + item.price * item.quantity, 0);
-  };
-
-  const formatCurrency = (value: number) => {
-    return value.toLocaleString('vi-VN') + ' VNĐ';
-  };
-
-    const renderOrder = (order: DishType[]) => {
-    const orderNumber = generateRandomOrderNumber();
-    const totalAmount = getTotalAmount(order);
+  const renderOrder = (order: OrderType) => {
+    const handleCompleteOrder = async (orderId: string) => {
+      try {
+        await fetch(`${API_ENDPOINTS.DELETE_ORDER}/${orderId}`, { method: 'DELETE' });
+        // Cập nhật lại danh sách sau khi xoá
+        fetchOrderHistory();
+      } catch (error) {
+        console.error('Lỗi xoá đơn hàng:', error);
+      }
+    };
 
     return (
-      <View style={styles.orderContainer} key={orderNumber}>
-        <Text style={styles.orderNumber}>Đơn hàng #{orderNumber}</Text>
+      <View style={styles.orderContainer} key={order._id}>
+        <Text style={styles.orderNumber}>Mã đơn hàng: {String(order._id).slice(-3)}</Text>
+        <Text style={styles.orderType}>Loại: {order.orderType}</Text> {/* Thêm dòng này để hiển thị loại đơn hàng */}
         <View style={styles.separator} />
-        {order.map((item, index) => (
+        {order.items.map((item, index) => (
           <View key={index} style={styles.dishContainer}>
             <View style={styles.dishRow}>
-              <Text style={styles.dishName}>{item.name}</Text>
-              <Text style={styles.priceText}>{formatCurrency(item.price * item.quantity)}</Text>
+              <Text style={styles.dishName}>
+                {item.name} (x{item.quantity})
+              </Text>
             </View>
             <Text style={styles.toppingText}>
-              {item.toppings.map((topping) => topping.name).join(', ')}
+              {Array.isArray(item.toppings) && item.toppings.length > 0
+                ? item.toppings.map((topping) => topping.name).join(', ')
+                : 'Không có topping'}
             </Text>
+            {item.note && <Text>Ghi chú: {item.note}</Text>}
             <View style={styles.separator} />
           </View>
         ))}
-        <View style={styles.separator} />
+
+        <TouchableOpacity
+          style={styles.completeButton}
+          onPress={() => handleCompleteOrder(order._id)}
+        >
+          <Text style={styles.buttonText}>Hoàn thành</Text>
+        </TouchableOpacity>
       </View>
     );
   };
@@ -97,92 +297,44 @@ const HistoryView: React.FC = () => {
     <View style={styles.container}>
       <Text style={styles.title}>Lịch sử Mua Hàng</Text>
       <ScrollView contentContainerStyle={styles.cartContainer} style={{ flex: 1 }}>
-        {orderList.map((order, index) => renderOrder(order))}
+        {orderList.length > 0 ? (
+          orderList.map((order) => renderOrder(order))
+        ) : (
+          <Text style={styles.noOrderText}>Không có lịch sử đơn hàng</Text>
+        )}
       </ScrollView>
     </View>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    padding: 20,
-    backgroundColor: '#f1f1f1', 
-  },
-  title: {
-    fontSize: 26,
-    fontWeight: 'bold',
-    textAlign: 'center',
-    marginBottom: 20,
-    color: '#333',
-  },
+  container: { padding: 16 },
+  title: { fontSize: 24, fontWeight: 'bold', marginBottom: 12 },
+  orderContainer: { backgroundColor: '#f0f0f0', borderRadius: 10, padding: 12, marginBottom: 16 },
+  orderNumber: { fontSize: 16, fontWeight: '600', marginBottom: 8 },
+  orderType: { fontSize: 14, color: 'orange', marginBottom: 8, fontWeight: 'bold'}, // Style cho "Loại: Mang về"
+  dishContainer: { backgroundColor: '#fff', padding: 8, marginBottom: 6, borderRadius: 6 },
+  dishRow: { flexDirection: 'row', justifyContent: 'space-between' },
+  dishName: { fontWeight: 'bold' },
+  priceText: { fontSize: 14, color: 'green' },
+  toppingText: { fontSize: 12, color: 'gray' },
+  separator: { height: 1, backgroundColor: '#ccc', marginVertical: 8 },
+  noOrderText: { fontSize: 16, textAlign: 'center', color: 'gray' },
   cartContainer: {
-    paddingBottom: 20,
-    flexGrow: 1,
-    width: '100%',
+    paddingBottom: 16,
+    paddingHorizontal: 8,
   },
-  orderContainer: {
-    marginBottom: 20,
-    padding: 20,
-    borderRadius: 12,
-    backgroundColor: '#e0e0e0', 
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 6,
-    elevation: 5, 
-    width: '100%', 
-  },
-  orderNumber: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#3e2723',
-    marginBottom: 12,
-  },
-  separator: {
-    height: 0.5,
-    backgroundColor: '#ddd', 
-    marginVertical: 6,
-  },
-  dishContainer: {
-    marginBottom: 2, // Giảm khoảng cách giữa các món ăn
-    width: '100%',
-  },
-  dishRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    width: '100%',
-  },
-  dishName: {
-    fontSize: 17,
-    fontWeight: '500',
-    flex: 2,
-    color: '#222',
-  },
-  priceText: {
-    fontSize: 17,
-    fontWeight: '600',
-    flex: 1,
-    textAlign: 'right',
-    color: '#000',
-  },
-  toppingText: {
-    fontSize: 14,
-    color: '#555', 
-    paddingLeft: 4,
-  },
-  totalContainer: {
+  completeButton: {
+    backgroundColor: '#4CAF50',
+    padding: 10,
+    borderRadius: 5,
+    alignItems: 'center',
     marginTop: 12,
-    alignItems: 'flex-end',
-    width: '100%', 
   },
-  totalText: {
-    fontSize: 18,
+  buttonText: {
+    color: 'white',
     fontWeight: 'bold',
-    color: '#2e7d32',
   },
 });
-
-
 
 export default HistoryView;

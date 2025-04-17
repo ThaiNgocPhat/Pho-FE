@@ -39,7 +39,6 @@ const App = () => {
             showCart={showCart}
             showHistory={showHistory}
             showHistoryHotPot={showHistoryHotPot}
-
           />
         </View>
       </View>
