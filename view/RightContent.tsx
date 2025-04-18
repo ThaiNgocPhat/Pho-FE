@@ -74,8 +74,8 @@ export const RightContent: React.FC<RightContentProps> = ({ showTable, showTakeA
         <OrderMenu 
         selectedTable={selectedTable as number}
         groupId={selectedGroupId as number}
-        groupName={selectedGroupName} // ← thêm dòng này
-        tableId={selectedTable as number} // ← đảm bảo truyền đúng tableId
+        groupName={selectedGroupName} 
+        tableId={selectedTable as number}
         onBack={() => setShowOrderMenu(false)}
         fetchData={fetchData}
       /> 
@@ -84,6 +84,7 @@ export const RightContent: React.FC<RightContentProps> = ({ showTable, showTakeA
           tableId={selectedTable}
           onBack={() => setSelectedTable(null)}
           onOrderPress={handleOrderPress}
+          isActive
         />
       ) : showTable ? (
         <TableList tables={tables} onSelectTable={setSelectedTable} />
@@ -94,7 +95,7 @@ export const RightContent: React.FC<RightContentProps> = ({ showTable, showTakeA
       ) : showCart ? (
         <CartView />
       ) : showHistory ? (
-        <HistoryView />
+        <HistoryView isActive={true}/>
       ) : showHistoryHotPot ? (
         <HotPotHistory/>
       ) : (

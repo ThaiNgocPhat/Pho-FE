@@ -55,9 +55,10 @@ type TableDetailsProps = {
   tableId: number;
   onBack: () => void;
   onOrderPress: (groupId: number, groupName: string) => void;
+  isActive: boolean
 };
 
-const TableDetails: React.FC<TableDetailsProps> = ({ tableId, onBack, onOrderPress }) => {
+const TableDetails: React.FC<TableDetailsProps> = ({ tableId, onBack, onOrderPress, isActive }) => {
   const [tableData, setTableData] = useState<TableDataType>({ groups: [] });
   const [dishMap, setDishMap] = useState<Record<string, string>>({});
   const [selectedGroupIdForPayment, setSelectedGroupIdForPayment] = useState<string | null>(null);
@@ -88,16 +89,8 @@ const TableDetails: React.FC<TableDetailsProps> = ({ tableId, onBack, onOrderPre
     setLoading(true);
     try {
       const response = await fetch(`${API_ENDPOINTS.GET_ORDER_TABLE}?tableId=${tableId}`);
-      const text = await response.text();
-      console.log('📥 Response text:', text);
-      // const data = await response.json();
-      let data;
-      try {
-        data = JSON.parse(text);
-      } catch (jsonError) {
-        console.error('❌ Không thể parse JSON:', jsonError);
-        return;
-      }
+      const data = await response.json();  
+      
       const groups = (data?.groups || []).map((group: any) => ({
         ...group,
         groupName: group.groupName || `Nhóm ${group.groupId}`,
@@ -109,13 +102,14 @@ const TableDetails: React.FC<TableDetailsProps> = ({ tableId, onBack, onOrderPre
             : [],
         })),
       }));
+  
       setTableData({ groups });
     } catch (error) {
       console.error('❌ Lỗi khi fetch dữ liệu bàn:', error);
     } finally {
       setLoading(false);
     }
-  };
+  };  
 
   useEffect(() => {
     fetchData();
@@ -249,28 +243,34 @@ const TableDetails: React.FC<TableDetailsProps> = ({ tableId, onBack, onOrderPre
     tableId: number,
     groupId: number,
     dishId: string,
-    quantity: number
+    quantity: number,
+    isActive: boolean
   ) => {
     try {
       const res = await fetch(`${API_ENDPOINTS.UPDATE_DISH_QUANTITY}`, {
-        method: 'PATCH',
+        method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ tableId, groupId, dishId, quantity }),
-      });      
+      });
   
       if (!res.ok) {
-        throw new Error(await res.text());
+        const error = await res.text();
+        throw new Error(error || 'Lỗi khi cập nhật');
       }
+  
       console.log('✅ Đã cập nhật số lượng món');
-      fetchOrderHistory(tableId);
+  
+      // Reload lại dữ liệu của bàn và cũng cập nhật lại lịch sử đơn hàng
+      await fetchData(); // Reload lại dữ liệu của bàn
+      fetchOrderHistory({isActive});
     } catch (err) {
       console.error('❌ Lỗi khi cập nhật số lượng:', err);
-      Alert.alert('Lỗi', 'Không thể cập nhật số lượng món ăn');
     }
   };
   
   
   
+
   return (
     <View style={styles.container}>
       <View style={styles.topButtons}>
@@ -374,7 +374,8 @@ const TableDetails: React.FC<TableDetailsProps> = ({ tableId, onBack, onOrderPre
                             Number(tableId),
                             Number(group.groupId),
                             editingItem.dishId,
-                            editingQuantity
+                            editingQuantity,
+                            isActive
                           );
                           setEditingItem(null);
                           fetchData(); 
