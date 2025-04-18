@@ -9,7 +9,7 @@ import { View, StyleSheet, ScrollView, Alert, Button } from 'react-native';
 type OrderMenuProps = {
   selectedTable: number;
   groupId: number;
-  groupName: string; // ← thêm dòng này
+  groupName: string; 
   tableId: number;
   onBack: () => void;
   fetchData: () => Promise<void>;
