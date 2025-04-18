@@ -1,39 +1,30 @@
 import { API_ENDPOINTS } from '@/config/api';
 import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, Dimensions, TouchableOpacity } from 'react-native';
-
-type ToppingType = {
-  name: string;
-};
-
-type DishType = {
-  name: string;
-  toppings: ToppingType[];
-  quantity: number;
-  note?: string;
-};
-
 type OrderType = {
   _id: string;
   orderNumber: string;
   orderType: string;
-  items: DishType[];
+  tableId?: number;
+  groupId?: number;
+  groupName?: string;
+  items: {
+    name: string;
+    quantity: number;
+    note: string;
+    toppings: { name: string }[];
+  }[];
 };
 
-const screenWidth = Dimensions.get('window').width;
 
 const HistoryView: React.FC = () => {
   const [orderList, setOrderList] = useState<OrderType[]>([]);
 
-  useEffect(() => {
-    fetchOrderHistory();
-  }, []);
-
-  const fetchOrderHistory = async () => {
+   const fetchOrderHistory = async () => {
     try {
       const response = await fetch(API_ENDPOINTS.GET_ORDER);
       const data = await response.json();
-
+  
       if (Array.isArray(data) && data.length > 0) {
         const formatted = data.map((order: any, index: number) => {
           const orderItems = order.items.map((item: any) => ({
@@ -42,19 +33,22 @@ const HistoryView: React.FC = () => {
             note: item.note || '',
             toppings: typeof item.toppings === 'string'
               ? item.toppings.split(',').map((t: string) => ({ name: t.trim() }))
-              : [],
+              : item.toppings.map((t: string) => ({ name: t })),
           }));
+  
           return {
             _id: order._id,
             orderNumber: String(index + 1).padStart(3, '0'),
-            orderType: order.orderType || 'Mang về',
+            orderType: order.orderType || (order.type === 'table' ? 'Tại bàn' : 'Mang về'),
+            tableId: order.tableId,
+            groupId: order.groupId,
+            groupName: order.groupName,
             items: orderItems,
-          };
+          };          
         });
-
+  
         setOrderList(formatted);
       } else {
-        console.error('Dữ liệu không hợp lệ hoặc không có dữ liệu');
         setOrderList([]);
       }
     } catch (error) {
@@ -62,6 +56,11 @@ const HistoryView: React.FC = () => {
       setOrderList([]);
     }
   };
+
+  useEffect(() => {
+    fetchOrderHistory();
+  }, []);
+  
 
   const handleCompleteOrder = async (orderId: string) => {
     try {
@@ -76,8 +75,17 @@ const HistoryView: React.FC = () => {
     <View style={styles.orderContainer} key={order._id}>
       <Text style={styles.orderNumber}>Mã đơn hàng: {String(order._id).slice(-3)}</Text>
       <Text style={styles.orderType}>Loại: {order.orderType}</Text>
+      
+      {/* Hiển thị thông tin bàn, nhóm nếu là loại 'table' */}
+      {order.orderType === 'Tại bàn' && (
+        <View style={styles.tableInfo}>
+          <Text style={styles.tableInfoText}>Bàn: {order.tableId}</Text>
+          <Text style={styles.tableInfoText}>Nhóm: {order.groupId}</Text>
+        </View>
+      )}
+      
       <View style={styles.separator} />
-
+  
       {order.items.map((item, index) => (
         <View key={index} style={styles.dishContainer}>
           <View style={styles.dishRow}>
@@ -96,7 +104,7 @@ const HistoryView: React.FC = () => {
           <View style={styles.separator} />
         </View>
       ))}
-
+  
       <TouchableOpacity
         style={styles.completeButton}
         onPress={() => handleCompleteOrder(order._id)}
@@ -105,6 +113,7 @@ const HistoryView: React.FC = () => {
       </TouchableOpacity>
     </View>
   );
+  
 
   return (
     <View style={styles.container}>
@@ -200,6 +209,16 @@ const styles = StyleSheet.create({
   buttonText: {
     color: 'white',
     fontWeight: 'bold',
+  },
+  tableInfo: {
+    marginBottom: 10,
+    padding: 10,
+    backgroundColor: '#f1f1f1',
+    borderRadius: 5,
+  },
+  tableInfoText: {
+    fontSize: 14,
+    color: '#333',
   },
 });
 

@@ -11,6 +11,7 @@ import {
   Alert,
 } from 'react-native';
 import Modal from 'react-native-modal';
+import fetchOrderHistory from '../view/History/HistoryView'
 
 
 // Các kiểu dữ liệu
@@ -32,12 +33,6 @@ type DishType = {
   price: number;
   toppings: ToppingType[];
   quantity: number;
-};
-
-type GroupType = {
-  groupId: number;
-  groupName: string;
-  orders: DishType[];
 };
 
 type TableDataType = {
@@ -71,8 +66,6 @@ const TableDetails: React.FC<TableDetailsProps> = ({ tableId, onBack, onOrderPre
   const [selectedGroupId, setSelectedGroupId] = useState<string | null>(null);
   const [editingItem, setEditingItem] = useState<{ groupId: string; dishId: string; quantity?: number } | null>(null);
   const [editingQuantity, setEditingQuantity] = useState<number>(1);
-  
-  
 
 
   useEffect(() => {
@@ -184,10 +177,6 @@ const TableDetails: React.FC<TableDetailsProps> = ({ tableId, onBack, onOrderPre
     return orders.reduce((total, item) => total + item.price * item.quantity, 0);
   };
 
-  const formatCurrency = (amount: number) => {
-    return amount.toLocaleString('vi-VN') + ' VNĐ';
-  };
-
   const handleOrderPress = (groupId: string) => {
     const parsedGroupId = parseInt(groupId, 10);
     const group = tableData?.groups?.find(group => parseInt(group.groupId, 10) === parsedGroupId);
@@ -272,8 +261,8 @@ const TableDetails: React.FC<TableDetailsProps> = ({ tableId, onBack, onOrderPre
       if (!res.ok) {
         throw new Error(await res.text());
       }
-  
       console.log('✅ Đã cập nhật số lượng món');
+      fetchOrderHistory(tableId);
     } catch (err) {
       console.error('❌ Lỗi khi cập nhật số lượng:', err);
       Alert.alert('Lỗi', 'Không thể cập nhật số lượng món ăn');
