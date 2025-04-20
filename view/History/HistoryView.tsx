@@ -2,6 +2,8 @@ import { API_ENDPOINTS } from '@/config/api';
 import React, { useEffect, useState } from 'react';
 import { Alert } from 'react-native';
 import { View, Text, StyleSheet, ScrollView, Dimensions, TouchableOpacity } from 'react-native';
+import socket from '../../utils/socket'
+
 type OrderType = {
   _id: string;
   orderNumber: string;
@@ -25,7 +27,32 @@ type HistoryViewProps = {
 const HistoryView: React.FC<HistoryViewProps> = ({ isActive }) => {
   const [orderList, setOrderList] = useState<OrderType[]>([]);
   const [groupedOrders, setGroupedOrders] = useState<any[]>([]);
-
+  const mapOrderItems = (items: any[]): OrderType["items"] => {
+    return items.map((item: any) => {
+      const dishName =
+        item.dishId?.name || // Ưu tiên lấy từ dishId nếu có populate
+        item.dish || 
+        item.name || 
+        'Không rõ món';
+  
+      const toppings =
+        typeof item.toppings === 'string'
+          ? item.toppings.split(',').map((t: string) => ({ name: t.trim() }))
+          : Array.isArray(item.toppings)
+            ? item.toppings.map((t: any) => ({
+                name: typeof t === 'string' ? t : t.name,
+              }))
+            : [];
+  
+      return {
+        name: dishName,
+        quantity: item.quantity,
+        note: item.note || '',
+        toppings,
+      };
+    });
+  };  
+  
   // Sửa fetchOrderHistory để nhận tham số `isActive`
   const fetchOrderHistory = async (isActive: boolean) => {
     if (!isActive) {
@@ -43,7 +70,7 @@ const HistoryView: React.FC<HistoryViewProps> = ({ isActive }) => {
 
         data.forEach((order: any) => {
           const orderItems = order.items.map((item: any) => ({
-            name: item.dish || item.name,
+            name: item.dish || item.name || 'Không rõ món',
             quantity: item.quantity,
             note: item.note || '',
             toppings: typeof item.toppings === 'string'
@@ -96,9 +123,53 @@ const HistoryView: React.FC<HistoryViewProps> = ({ isActive }) => {
 
   useEffect(() => {
     if (isActive) {
-      fetchOrderHistory(isActive);  // Truyền tham số vào fetchOrderHistory
+      fetchOrderHistory(isActive);
     }
+  
+    const handleOrderHistoryUpdated = (data: { type: 'takeaway' | 'table'; order: any }) => {
+      console.log('📦 Lịch sử đơn hàng đã được cập nhật:', data);
+      
+      const mappedOrder: OrderType = {
+        _id: data.order._id,
+        orderNumber: data.order.orderNumber ?? '',
+        orderType: data.order.type === 'table' ? 'Tại bàn' : 'Mang về',
+        items: mapOrderItems(data.order.items ?? []),
+        tableId: data.order.tableId,
+        groupId: data.order.groupId,
+        groupName: data.order.groupName,
+      };
+    
+      if (data.type === 'takeaway') {
+        setOrderList((prevOrders) => {
+          const exists = prevOrders.some((order) => order._id === mappedOrder._id);
+          if (exists) return prevOrders;
+          return [mappedOrder, ...prevOrders];  // Add new order to the top
+        });
+      } else if (data.type === 'table') {
+        setGroupedOrders((prevGroups) => {
+          const updatedGroup = {
+            ...mappedOrder,
+            orders: [mappedOrder],
+          };
+          return [updatedGroup, ...prevGroups];  // Add new group to the top
+        });
+      }
+    };    
+  
+    // Lắng nghe sự kiện cập nhật lịch sử đơn hàng
+    socket.on('orderHistoryUpdated', handleOrderHistoryUpdated);
+  
+    // Lắng nghe sự kiện yêu cầu cập nhật lịch sử đơn hàng
+    socket.on('fetchOrderHistory', () => {
+      fetchOrderHistory(isActive);  // Cập nhật lại lịch sử đơn hàng khi có yêu cầu
+    });
+  
+    return () => {
+      socket.off('orderHistoryUpdated', handleOrderHistoryUpdated);
+      socket.off('fetchOrderHistory');
+    };
   }, [isActive]);
+  
   
 
   const handleCompleteOrder = async (orderId: string) => {
@@ -132,20 +203,24 @@ const HistoryView: React.FC<HistoryViewProps> = ({ isActive }) => {
       <View style={styles.separator} />
   
       {order.items.map((item, index) => (
-        <View key={index} style={styles.dishContainer}>
-          <View style={styles.dishRow}>
-            <Text style={styles.dishName}>
-              {item.name} (x{item.quantity})
-            </Text>
-          </View>
-          <Text style={styles.toppingText}>
-            {Array.isArray(item.toppings) && item.toppings.length > 0
-              ? item.toppings.map((topping) => topping.name).join(', ')
-              : 'Không có topping'}
-          </Text>
-          {item.note !== undefined && item.note !== null && item.note !== '' && (
+  <View key={index} style={styles.dishContainer}>
+    <View style={styles.dishRow}>
+    <Text style={styles.dishName}>
+      {item.name} (x{item.quantity})
+    </Text>
+    </View>
+
+      {/* Kiểm tra toppings và render */}
+      <Text style={styles.toppingText}>
+          {Array.isArray(item.toppings) && item.toppings.length > 0
+          ? item.toppings.map((topping, idx) => topping.name).join(', ') // Chỉ render tên topping
+          : (typeof item.toppings === 'string' ? item.toppings : 'Không có topping')}
+      </Text>
+          {/* Kiểm tra và hiển thị ghi chú */}
+          {item.note && (
             <Text style={styles.noteText}>Ghi chú: {item.note}</Text>
           )}
+
           <View style={styles.separator} />
         </View>
       ))}

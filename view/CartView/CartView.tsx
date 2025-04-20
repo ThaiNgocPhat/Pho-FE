@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Alert } from 'react-native';
 import { API_ENDPOINTS } from '@/config/api'; 
+import socket from '../../utils/socket'
 
 type ToppingType = {
   name: string;
@@ -64,13 +65,29 @@ const CartView: React.FC = () => {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({}), // Không cần truyền type nữa
+        body: JSON.stringify({
+          items: cartItems.map(item => ({
+            dishId: item.dishId,
+            quantity: item.quantity,
+            toppings: item.toppings.map(t => t.name),
+            note: item.note || '',
+          })),
+        }),
       });
   
       if (response.ok) {
         Alert.alert('Thông báo', 'Đặt hàng thành công!');
         setCartItems([]);
         fetchCart();
+  
+        const data = await response.json();
+        socket.emit('orderHistoryUpdated', {
+          type: 'takeaway',
+          order: data,
+        });
+  
+        // Cập nhật lại danh sách trong HistoryView ngay sau khi thanh toán
+        socket.emit('fetchOrderHistory');
       } else {
         const errorData = await response.json();
         throw new Error(errorData.message || 'Thanh toán thất bại');
@@ -80,6 +97,8 @@ const CartView: React.FC = () => {
       Alert.alert('Lỗi', 'Có lỗi xảy ra khi thanh toán. Vui lòng thử lại.');
     }
   };  
+  
+  
 
   const formatPrice = (price: number) => {
     return price.toLocaleString('vi-VN');
