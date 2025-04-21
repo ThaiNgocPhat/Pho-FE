@@ -3,7 +3,7 @@ import { Dish } from '@/components/Dish';
 import { Topping } from '@/components/Topping';
 import { API_ENDPOINTS } from '@/config/api';
 import { DISH_TOPPING_RULES } from '@/config/constants';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { View, StyleSheet, ScrollView, Alert, Button } from 'react-native';
 
 type OrderMenuProps = {
@@ -27,6 +27,23 @@ export const OrderMenu: React.FC<OrderMenuProps> = ({
   const [selectedDishId, setSelectedDishId] = useState<string | null>(null);
   const [selectedToppings, setSelectedToppings] = useState<string[]>([]);
   const [note, setNote] = useState<string>('');
+  const [dishList, setDishList] = useState<{ _id: string; name: string }[]>([]);
+
+  useEffect(() => {
+    const fetchDishes = async () => {
+      try {
+        const response = await fetch(API_ENDPOINTS.DISH); // hoặc endpoint bạn dùng
+        const result = await response.json();
+        setDishList(result); // giả sử result là mảng món ăn
+      } catch (error) {
+        console.error('Lỗi khi lấy danh sách món ăn:', error);
+      }
+    };
+  
+    fetchDishes();
+  }, []);
+  
+
 
   const handleAddToCart = async () => {
     if (!selectedDishId) {
@@ -41,6 +58,7 @@ export const OrderMenu: React.FC<OrderMenuProps> = ({
     }
   
     try {
+      const selectedDish = dishList.find((d) => d._id === selectedDishId);
       const body = {
         groupId,
         dishId: selectedDishId,
@@ -48,7 +66,7 @@ export const OrderMenu: React.FC<OrderMenuProps> = ({
         quantity: 1,
         note: note || '',
         tableId,  // OK
-        name: groupName || 'Nhóm X',  // OK
+        name: selectedDish?.name || 'Không rõ tên món',
       };
   
       console.log('📤 Gửi món vào nhóm:', body);
