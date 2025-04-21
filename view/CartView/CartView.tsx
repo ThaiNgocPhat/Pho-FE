@@ -19,20 +19,21 @@ type DishType = {
 const CartView: React.FC = () => {
   const [cartItems, setCartItems] = useState<DishType[]>([]);
   const [isCartEmpty, setIsCartEmpty] = useState(false); 
+  const [cartCleared, setCartCleared] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false); 
 
   const fetchCart = async () => {
     try {
       const response = await fetch(API_ENDPOINTS.GET_CART);
       const data = await response.json();
       console.log("Dữ liệu giỏ hàng:", data);
-  
-      // Kiểm tra nếu giỏ hàng có món
+
       if (Array.isArray(data.items) && data.items.length > 0) {
         const formatted = await Promise.all(
           data.items.map(async (item: { dishId: string, toppings: string[], quantity: number, note: string }) => {
             const dishResponse = await fetch(`${API_ENDPOINTS.GET_DISH_BY_ID}/${item.dishId}`);
             const dishData = await dishResponse.json();
-  
+
             return {
               dishId: item.dishId,
               name: dishData.name,
@@ -53,13 +54,22 @@ const CartView: React.FC = () => {
       console.error('Lỗi khi fetch giỏ hàng:', error);
     }
   };  
-  
+
   useEffect(() => {
     fetchCart(); 
   }, []);
-  
+
+  useEffect(() => {
+    if (!isProcessing && cartCleared) {
+      fetchCart();
+      setCartCleared(false); // reset để không lặp lại
+    }
+  }, [cartCleared, isProcessing]);
+
   const handlePayment = async () => {
     try {
+      setIsProcessing(true);
+
       const response = await fetch(`${API_ENDPOINTS.ORDER}/checkout`, {
         method: 'POST',
         headers: {
@@ -74,19 +84,27 @@ const CartView: React.FC = () => {
           })),
         }),
       });
-  
+
       if (response.ok) {
         Alert.alert('Thông báo', 'Đặt hàng thành công!');
-        setCartItems([]);
-        fetchCart();
-  
+
+        const deleteResponse = await fetch(API_ENDPOINTS.CLEAR_CART, { method: 'DELETE' });
+
+        if (deleteResponse.ok) {
+          console.log("Giỏ hàng đã được xóa thành công.");
+        } else {
+          console.error("Không thể xóa giỏ hàng.");
+        }
+
+        setCartItems([]); 
+        setCartCleared(true);
+
         const data = await response.json();
         socket.emit('orderHistoryUpdated', {
           type: 'takeaway',
           order: data,
         });
-  
-        // Cập nhật lại danh sách trong HistoryView ngay sau khi thanh toán
+
         socket.emit('fetchOrderHistory');
       } else {
         const errorData = await response.json();
@@ -95,10 +113,10 @@ const CartView: React.FC = () => {
     } catch (err) {
       console.error('Lỗi khi thanh toán:', err);
       Alert.alert('Lỗi', 'Có lỗi xảy ra khi thanh toán. Vui lòng thử lại.');
+    } finally {
+      setIsProcessing(false);
     }
-  };  
-  
-  
+  };
 
   const formatPrice = (price: number) => {
     return price.toLocaleString('vi-VN');
@@ -125,7 +143,6 @@ const CartView: React.FC = () => {
     <View style={styles.container}>
       <Text style={styles.title}>Giỏ hàng</Text>
 
-      {/* Hiển thị thông báo khi giỏ hàng trống */}
       {isCartEmpty ? (
         <View style={styles.emptyCartContainer}>
           <Text style={styles.emptyCartText}>Giỏ hàng của bạn hiện tại không có món nào.</Text>
@@ -144,8 +161,8 @@ const CartView: React.FC = () => {
                   ))}
                 </View>
                 {item.note && (
-                <Text style={{color: 'red'}}>{item.note}</Text>
-              )}
+                  <Text style={{ color: 'red' }}>{item.note}</Text>
+                )}
               </View>
 
               <View style={styles.cartItemRightContainer}>

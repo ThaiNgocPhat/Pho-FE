@@ -54,4 +54,5 @@ export const API_ENDPOINTS = {
   DELETE_DISH: `${baseUrl}/table-order/remove-dish`,
   UPDATE_DISH_QUANTITY: `${baseUrl}/table-order/update-quantity`,
   ORDER: `${baseUrl}/orders`,
+  CLEAR_CART: `${baseUrl}/cart`,
 };

@@ -27,47 +27,48 @@ type HistoryViewProps = {
 const HistoryView: React.FC<HistoryViewProps> = ({ isActive }) => {
   const [orderList, setOrderList] = useState<OrderType[]>([]);
   const [groupedOrders, setGroupedOrders] = useState<any[]>([]);
+
   const mapOrderItems = (items: any[]): OrderType["items"] => {
-    return items.map((item: any) => {
-      const dishName =
-        item.dishId?.name || // Ưu tiên lấy từ dishId nếu có populate
-        item.dish || 
-        item.name || 
-        'Không rõ món';
+  return items.map((item: any) => {
+    const dishName =
+      item.dishId?.name ||  // Ưu tiên lấy từ dishId nếu có populate
+      item.dish || 
+      item.name || 
+      'Không rõ món';
   
-      const toppings =
-        typeof item.toppings === 'string'
-          ? item.toppings.split(',').map((t: string) => ({ name: t.trim() }))
-          : Array.isArray(item.toppings)
-            ? item.toppings.map((t: any) => ({
-                name: typeof t === 'string' ? t : t.name,
-              }))
-            : [];
+    const toppings =
+      typeof item.toppings === 'string'
+        ? item.toppings.split(',').map((t: string) => ({ name: t.trim() }))
+        : Array.isArray(item.toppings)
+          ? item.toppings.map((t: any) => ({
+              name: typeof t === 'string' ? t : t.name,
+            }))
+          : [];
   
-      return {
-        name: dishName,
-        quantity: item.quantity,
-        note: item.note || '',
-        toppings,
-      };
-    });
-  };  
+    return {
+      name: dishName,
+      quantity: item.quantity,
+      note: item.note || '',
+      toppings,
+    };
+  });
+};
+
   
-  // Sửa fetchOrderHistory để nhận tham số `isActive`
   const fetchOrderHistory = async (isActive: boolean) => {
     if (!isActive) {
       console.log('Không có dữ liệu vì isActive là false.');
       return;
     }
-
+  
     try {
       const response = await fetch(API_ENDPOINTS.GET_ORDER);
       const data = await response.json();
-
+  
       if (Array.isArray(data) && data.length > 0) {
         const dineInOrders: { [key: string]: OrderType[] } = {};
         const takeAwayOrders: OrderType[] = [];
-
+  
         data.forEach((order: any) => {
           const orderItems = order.items.map((item: any) => ({
             name: item.dish || item.name || 'Không rõ món',
@@ -77,7 +78,7 @@ const HistoryView: React.FC<HistoryViewProps> = ({ isActive }) => {
               ? item.toppings.split(',').map((t: string) => ({ name: t.trim() }))
               : item.toppings.map((t: string) => ({ name: t })),
           }));
-
+  
           const formattedOrder: OrderType = {
             _id: order._id,
             orderNumber: order._id.slice(-3),
@@ -87,7 +88,7 @@ const HistoryView: React.FC<HistoryViewProps> = ({ isActive }) => {
             groupName: order.groupName,
             items: orderItems,
           };
-
+  
           if (formattedOrder.orderType === 'Tại bàn' && formattedOrder.groupId !== undefined) {
             const key = `${formattedOrder.tableId}-${formattedOrder.groupId}`;
             if (!dineInOrders[key]) dineInOrders[key] = [];
@@ -96,7 +97,7 @@ const HistoryView: React.FC<HistoryViewProps> = ({ isActive }) => {
             takeAwayOrders.push(formattedOrder);
           }
         });
-
+  
         const dineInGrouped = Object.entries(dineInOrders).map(([key, orders]) => {
           const first = orders[0];
           return {
@@ -106,7 +107,7 @@ const HistoryView: React.FC<HistoryViewProps> = ({ isActive }) => {
             orders,
           };
         });
-
+  
         setOrderList(takeAwayOrders);
         setGroupedOrders(dineInGrouped);
       } else {
@@ -119,6 +120,7 @@ const HistoryView: React.FC<HistoryViewProps> = ({ isActive }) => {
       setGroupedOrders([]);
     }
   };
+  
 
 
   useEffect(() => {
@@ -133,7 +135,7 @@ const HistoryView: React.FC<HistoryViewProps> = ({ isActive }) => {
         _id: data.order._id,
         orderNumber: data.order.orderNumber ?? '',
         orderType: data.order.type === 'table' ? 'Tại bàn' : 'Mang về',
-        items: mapOrderItems(data.order.items ?? []),
+        items: mapOrderItems(data.order.items ?? []),  // Đảm bảo đã gọi mapOrderItems ở đây
         tableId: data.order.tableId,
         groupId: data.order.groupId,
         groupName: data.order.groupName,
@@ -154,7 +156,8 @@ const HistoryView: React.FC<HistoryViewProps> = ({ isActive }) => {
           return [updatedGroup, ...prevGroups];  // Add new group to the top
         });
       }
-    };    
+    };
+    
   
     // Lắng nghe sự kiện cập nhật lịch sử đơn hàng
     socket.on('orderHistoryUpdated', handleOrderHistoryUpdated);
@@ -203,20 +206,21 @@ const HistoryView: React.FC<HistoryViewProps> = ({ isActive }) => {
       <View style={styles.separator} />
   
       {order.items.map((item, index) => (
-  <View key={index} style={styles.dishContainer}>
-    <View style={styles.dishRow}>
-    <Text style={styles.dishName}>
-      {item.name} (x{item.quantity})
-    </Text>
-    </View>
+        <View key={index} style={styles.dishContainer}>
+          <View style={styles.dishRow}>
+            <Text style={styles.dishName}>
+              {item.name} (x{item.quantity})
+            </Text>
+          </View>
 
-      {/* Kiểm tra toppings và render */}
-      <Text style={styles.toppingText}>
-          {Array.isArray(item.toppings) && item.toppings.length > 0
-          ? item.toppings.map((topping, idx) => topping.name).join(', ') // Chỉ render tên topping
-          : (typeof item.toppings === 'string' ? item.toppings : 'Không có topping')}
-      </Text>
-          {/* Kiểm tra và hiển thị ghi chú */}
+          {/* Kiểm tra toppings và render */}
+          <Text style={styles.toppingText}>
+              {Array.isArray(item.toppings) && item.toppings.length > 0
+              ? item.toppings.map((topping, idx) => topping.name).join(', ') 
+              : (typeof item.toppings === 'string' ? item.toppings : 'Không có topping')}
+          </Text>
+
+          {/* Hiển thị ghi chú nếu có */}
           {item.note && (
             <Text style={styles.noteText}>Ghi chú: {item.note}</Text>
           )}
@@ -224,7 +228,6 @@ const HistoryView: React.FC<HistoryViewProps> = ({ isActive }) => {
           <View style={styles.separator} />
         </View>
       ))}
-  
       <TouchableOpacity
         style={styles.completeButton}
         onPress={() => handleCompleteOrder(order._id)}
@@ -245,46 +248,46 @@ const HistoryView: React.FC<HistoryViewProps> = ({ isActive }) => {
           <Text style={styles.noOrderText}>Không có lịch sử đơn hàng</Text>
         )}
         {groupedOrders.map((group) => (
-  <View key={`${group.tableId}-${group.groupId}`} style={styles.orderContainer}>
-    <Text style={styles.orderNumber}>
-      Bàn {group.tableId} - {group.groupName}
-    </Text>
-    <Text style={styles.orderType}>Loại: Tại bàn</Text>
+          <View key={`${group.tableId}-${group.groupId}`} style={styles.orderContainer}>
+            <Text style={styles.orderNumber}>
+              Bàn {group.tableId} - {group.groupName}
+            </Text>
+            <Text style={styles.orderType}>Loại: Tại bàn</Text>
 
-    <View style={styles.separator} />
-    
-    {group.orders.map((order: OrderType) =>
-          order.items.map((item, index) => (
-            <View key={`${order._id}-${index}`} style={styles.dishContainer}>
-              <Text style={styles.dishName}>
-                {item.name} (x{item.quantity})
-              </Text>
-              <Text style={styles.toppingText}>
-                {item.toppings.length > 0 ? item.toppings.map(t => t.name).join(', ') : 'Không có topping'}
-              </Text>
-              {item.note && <Text style={styles.noteText}>Ghi chú: {item.note}</Text>}
-            </View>
-          ))
-        )}
+            <View style={styles.separator} />
+            
+            {group.orders.map((order: OrderType) =>
+              order.items.map((item, index) => (
+                <View key={`${order._id}-${index}`} style={styles.dishContainer}>
+                  <Text style={styles.dishName}>
+                    {item.name} (x{item.quantity})
+                  </Text>
+                  <Text style={styles.toppingText}>
+                    {item.toppings.length > 0 ? item.toppings.map(t => t.name).join(', ') : 'Không có topping'}
+                  </Text>
+                  {item.note && <Text style={styles.noteText}>Ghi chú: {item.note}</Text>}
+                </View>
+              ))
+            )}
 
-        <TouchableOpacity
-          style={styles.completeButton}
-          onPress={async () => {
-            // Xoá tất cả đơn thuộc nhóm
-            try {
-              for (let order of group.orders) {
-                await handleCompleteOrder(order._id);
-              }
-              console.log('✅ Đã hoàn thành nhóm');
-            } catch (error) {
-              console.error('❌ Lỗi khi xoá nhóm:', error);
-            }
-          }}
-        >
-          <Text style={styles.buttonText}>Hoàn thành nhóm</Text>
-        </TouchableOpacity>
-      </View>
-    ))}
+            <TouchableOpacity
+              style={styles.completeButton}
+              onPress={async () => {
+                // Xoá tất cả đơn thuộc nhóm
+                try {
+                  for (let order of group.orders) {
+                    await handleCompleteOrder(order._id);
+                  }
+                  console.log('✅ Đã hoàn thành nhóm');
+                } catch (error) {
+                  console.error('❌ Lỗi khi xoá nhóm:', error);
+                }
+              }}
+            >
+              <Text style={styles.buttonText}>Hoàn thành nhóm</Text>
+            </TouchableOpacity>
+          </View>
+        ))}
       </ScrollView>
     </View>
   );
