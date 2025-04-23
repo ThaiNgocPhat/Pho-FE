@@ -145,16 +145,31 @@ const HistoryView: React.FC<HistoryViewProps> = ({ isActive }) => {
         setOrderList((prevOrders) => {
           const exists = prevOrders.some((order) => order._id === mappedOrder._id);
           if (exists) return prevOrders;
-          return [mappedOrder, ...prevOrders];  // Add new order to the top
+          return [mappedOrder, ...prevOrders];  
         });
       } else if (data.type === 'table') {
         setGroupedOrders((prevGroups) => {
-          const updatedGroup = {
-            ...mappedOrder,
-            orders: [mappedOrder],
-          };
-          return [updatedGroup, ...prevGroups];  // Add new group to the top
-        });
+          const key = `${mappedOrder.tableId}-${mappedOrder.groupId}`;
+          const existingGroupIndex = prevGroups.findIndex(
+            (group) => `${group.tableId}-${group.groupId}` === key
+          );
+        
+          if (existingGroupIndex !== -1) {
+            // Đã có nhóm, thêm đơn vào
+            const updatedGroups = [...prevGroups];
+            updatedGroups[existingGroupIndex].orders.unshift(mappedOrder);
+            return updatedGroups;
+          } else {
+            // Chưa có nhóm, tạo nhóm mới
+            const newGroup = {
+              groupId: mappedOrder.groupId,
+              groupName: mappedOrder.groupName,
+              tableId: mappedOrder.tableId,
+              orders: [mappedOrder],
+            };
+            return [newGroup, ...prevGroups];
+          }
+        });        
       }
     };
     
