@@ -1,7 +1,8 @@
 // src/utils/socket.js
 import { io } from 'socket.io-client';
 
-const socket = io('http://192.168.1.11:7777');
+const socket = io('https://pho-app-daf00422d35a.herokuapp.com');
+
 
 // Lắng nghe sự kiện "orderReceived"
 socket.on('orderReceived', (data) => {

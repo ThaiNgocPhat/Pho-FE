@@ -1,6 +1,5 @@
 import CartView from '@/view/CartView/CartView';
 import HistoryView from '@/view/History/HistoryView';
-import { HotpotView } from '@/view/HotPot/HotPotView';
 import { OrderMenu } from '@/components/OrderMenu';
 import TableDetails from '@/components/TableDetails';
 
@@ -8,16 +7,13 @@ import TableList from '@/view/Table/TableList';
 import { TakeAwayView } from '@/view/TakeAway/TakeAwayView';
 import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import HotPotHistory from '@/view/HopotHistory/HotPotHistory';
 import { API_ENDPOINTS } from '@/config/api';
 
 type RightContentProps = {
   showTable: boolean;
   showTakeAway: boolean;
-  showHotPot: boolean;
   showCart: boolean
   showHistory: boolean
-  showHistoryHotPot: boolean
   selectedTable: number | null;
   setSelectedTable: (id: number | null) => void;
   onBack: () => void;
@@ -25,7 +21,7 @@ type RightContentProps = {
   fetchData: () => void;
 };
 
-export const RightContent: React.FC<RightContentProps> = ({ showTable, showTakeAway, showHotPot, showCart, showHistory, showHistoryHotPot }) => {
+export const RightContent: React.FC<RightContentProps> = ({ showTable, showTakeAway, showCart, showHistory }) => {
   const [selectedTable, setSelectedTable] = useState<number | null>(null);
   const [showOrderMenu, setShowOrderMenu] = useState(false);
   const [selectedGroupId, setSelectedGroupId] = useState<number | null>(null);
@@ -90,14 +86,10 @@ export const RightContent: React.FC<RightContentProps> = ({ showTable, showTakeA
         <TableList tables={tables} onSelectTable={setSelectedTable} />
       ) : showTakeAway ? (
         <TakeAwayView />
-      ) : showHotPot ? (
-        <HotpotView />
       ) : showCart ? (
         <CartView />
       ) : showHistory ? (
         <HistoryView isActive={true}/>
-      ) : showHistoryHotPot ? (
-        <HotPotHistory/>
       ) : (
         <Text style={styles.placeholder}>Chọn một tùy chọn</Text>
       )}
