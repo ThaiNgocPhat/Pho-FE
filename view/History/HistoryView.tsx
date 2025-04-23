@@ -121,7 +121,16 @@ const HistoryView: React.FC<HistoryViewProps> = ({ isActive }) => {
     }
   };
   
-
+  useEffect(() => {
+    socket.on('orderHistoryUpdated', () => {
+      console.log("Nhận được sự kiện orderHistoryUpdated, đang fetch dữ liệu mới...");
+      fetchOrderHistory(true);
+    });
+  
+    return () => {
+      socket.off('orderHistoryUpdated');
+    };
+  }, []);  
 
   useEffect(() => {
     if (isActive) {
@@ -186,6 +195,17 @@ const HistoryView: React.FC<HistoryViewProps> = ({ isActive }) => {
       socket.off('orderHistoryUpdated', handleOrderHistoryUpdated);
       socket.off('fetchOrderHistory');
     };
+  }, [isActive]);
+
+  
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (isActive) {
+        fetchOrderHistory(isActive);
+      }
+    }, 1000); 
+
+    return () => clearInterval(interval); // Dọn dẹp khi component unmount hoặc không còn active
   }, [isActive]);
   
   

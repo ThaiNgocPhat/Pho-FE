@@ -95,7 +95,7 @@ const CartView: React.FC = () => {
         } else {
           console.error("Không thể xóa giỏ hàng.");
         }
-
+        socket.emit('fetchOrderHistory');
         setCartItems([]); 
         setCartCleared(true);
 
