@@ -28,6 +28,16 @@ export const OrderMenu: React.FC<OrderMenuProps> = ({
   const [selectedToppings, setSelectedToppings] = useState<string[]>([]);
   const [note, setNote] = useState<string>('');
   const [dishList, setDishList] = useState<{ _id: string; name: string }[]>([]);
+  const [selectedDishes, setSelectedDishes] = useState<{ _id: string; toppings: string[]; note: string }[]>([]);
+
+
+  const handleAddDish = (dishId: string, toppings: string[], note: string) => {
+    setSelectedDishes((prev) => [
+      ...prev,
+      { _id: dishId, toppings, note },
+    ]);
+  };
+  
 
   useEffect(() => {
     const fetchDishes = async () => {
@@ -46,30 +56,26 @@ export const OrderMenu: React.FC<OrderMenuProps> = ({
 
 
   const handleAddToCart = async () => {
-    if (!selectedDishId) {
-      Alert.alert('Thông báo', 'Vui lòng chọn món ăn!');
-      return;
-    }
-  
-    const toppingRule = DISH_TOPPING_RULES[selectedDishId] || 'requiredTopping';
-    if (toppingRule === 'requiredTopping' && selectedToppings.length === 0) {
-      Alert.alert('Thông báo', 'Vui lòng chọn topping!');
+    if (selectedDishes.length === 0) {
+      Alert.alert('Thông báo', 'Vui lòng chọn ít nhất một món!');
       return;
     }
   
     try {
-      const selectedDish = dishList.find((d) => d._id === selectedDishId);
-      const body = {
-        groupId,
-        dishId: selectedDishId,
-        toppings: selectedToppings,
-        quantity: 1,
-        note: note || '',
-        tableId,  // OK
-        name: selectedDish?.name || 'Không rõ tên món',
-      };
+      const body = selectedDishes.map(({ _id, toppings, note }) => {
+        const selectedDish = dishList.find((d) => d._id === _id);
+        return {
+          groupId,
+          dishId: _id,
+          toppings: toppings,
+          quantity: 1,
+          note: note || '',
+          tableId,
+          name: selectedDish?.name || 'Không rõ tên món',
+        };
+      });
   
-      console.log('📤 Gửi món vào nhóm:', body);
+      console.log('📤 Gửi nhiều món vào nhóm:', body);
   
       const response = await fetch(API_ENDPOINTS.ORDER_TABLE, {
         method: 'POST',
@@ -83,10 +89,9 @@ export const OrderMenu: React.FC<OrderMenuProps> = ({
         throw new Error(result?.message || 'Thêm món thất bại');
       }
   
-      Alert.alert('✅ Thành công', 'Đã thêm món vào nhóm');
+      Alert.alert('✅ Thành công', 'Đã thêm các món vào nhóm');
   
-      setSelectedDishId(null);
-      setSelectedToppings([]);
+      setSelectedDishes([]);
       setNote('');
   
       if (fetchData) {
@@ -99,6 +104,7 @@ export const OrderMenu: React.FC<OrderMenuProps> = ({
       Alert.alert('Lỗi', 'Không thể thêm món. Vui lòng thử lại!');
     }
   };
+  
   
   return (
     <View style={styles.container}>
